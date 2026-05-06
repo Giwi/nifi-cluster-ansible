@@ -52,6 +52,20 @@ For deploying HAProxy as a Podman container on a separate server (not Kubernetes
 ansible-playbook -i inventory/hosts.ini site.yml --limit haproxy
 ```
 
+## HAProxy Podman for Kubernetes
+
+To deploy an external HAProxy (as Podman container) that load balances to the Kubernetes-deployed NiFi:
+```bash
+cd k8s/haproxy
+./podman-deploy.sh <kubernetes-nifi-service-ip>
+```
+
+Or if kubectl is configured:
+```bash
+cd k8s/haproxy
+./podman-deploy.sh
+```
+
 ## Configuration
 
 Edit secrets in `nifi/secrets.yaml.example` before deploying. Update Keycloak URL, realm, client ID/secret.
