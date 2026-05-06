@@ -1,18 +1,22 @@
 ---
-- name: Install HAProxy
+- name: Install Podman
   apt:
     name:
-      - haproxy
-      - openssl
+      - podman
     state: present
     update_cache: yes
+
+- name: Create HAProxy configuration directory
+  file:
+    path: /etc/haproxy
+    state: directory
+    mode: '0755'
 
 - name: Deploy HAProxy configuration
   template:
     src: haproxy.cfg.j2
     dest: /etc/haproxy/haproxy.cfg
     mode: '0644'
-    validate: haproxy -c -f %s
   notify: restart haproxy
 
 - name: Create SSL certificate directory
@@ -39,8 +43,36 @@
   when: haproxy_ssl_termination
   notify: restart haproxy
 
-- name: Start and enable HAProxy
-  systemd:
-    name: haproxy
-    state: started
-    enabled: yes
+- name: Stop existing HAProxy container if running
+  command: podman stop haproxy
+  register: stop_result
+  failed_when: stop_result.rc != 0 and "no such container" not in stop_result.stderr
+  changed_when: stop_result.rc == 0
+
+- name: Remove existing HAProxy container if exists
+  command: podman rm haproxy
+  register: rm_result
+  failed_when: rm_result.rc != 0 and "no such container" not in rm_result.stderr
+  changed_when: rm_result.rc == 0
+
+- name: Deploy HAProxy container
+  command: >
+    podman run -d
+    --name haproxy
+    -p {{ haproxy_frontend_port }}:{{ haproxy_frontend_port }}
+    -p {{ haproxy_stats_port }}:{{ haproxy_stats_port }}
+    -v /etc/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    {% if haproxy_ssl_termination %}
+    -v /etc/haproxy/certs:/etc/haproxy/certs:ro
+    {% endif %}
+    --restart always
+    haproxy:2.8
+  register: podman_run
+  changed_when: podman_run.rc == 0
+
+- name: Wait for HAProxy to start
+  wait_for:
+    host: localhost
+    port: "{{ haproxy_frontend_port }}"
+    delay: 5
+    timeout: 30

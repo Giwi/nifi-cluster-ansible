@@ -33,10 +33,16 @@ ansible-playbook -i inventory/hosts.ini site.yml --limit zookeeper
 ansible-playbook -i inventory/hosts.ini site.yml --limit nifi
 ```
 
+### Deploy only HAProxy:
+```bash
+ansible-playbook -i inventory/hosts.ini site.yml --limit haproxy
+```
+
 ### Check container status:
 ```bash
 ansible zookeeper -i inventory/hosts.ini -m shell -a "podman ps | grep zookeeper"
 ansible nifi -i inventory/hosts.ini -m shell -a "podman ps | grep nifi"
+ansible haproxy -i inventory/hosts.ini -m shell -a "podman ps | grep haproxy"
 ```
 
 ### View logs:
@@ -71,6 +77,8 @@ After deployment:
 - ZooKeeper: `server_ip:2181`
 - NiFi UI (without Keycloak): `http://nifi_server_ip:8080/nifi`
 - NiFi UI (with Keycloak): `https://nifi_server_ip:8443/nifi`
+- NiFi UI (via HAProxy): `https://haproxy_server_ip:8443/nifi`
+- HAProxy stats: `http://haproxy_server_ip:8404/stats`
 
 Note: When Keycloak authentication is enabled, only the HTTPS port (8443) is exposed. HTTP port (8080) is not accessible.
 

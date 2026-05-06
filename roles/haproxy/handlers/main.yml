@@ -1,5 +1,4 @@
 ---
 - name: restart haproxy
-  systemd:
-    name: haproxy
-    state: restarted
+  command: podman restart haproxy
+  changed_when: true

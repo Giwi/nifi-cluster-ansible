@@ -45,6 +45,13 @@ Access NiFi at: `https://<external-ip>:8443/nifi`
 
 View HAProxy stats at: `http://<external-ip>:8404/stats`
 
+## HAProxy Podman (Ansible)
+
+For deploying HAProxy as a Podman container on a separate server (not Kubernetes), see the Ansible role:
+```bash
+ansible-playbook -i inventory/hosts.ini site.yml --limit haproxy
+```
+
 ## Configuration
 
 Edit secrets in `nifi/secrets.yaml.example` before deploying. Update Keycloak URL, realm, client ID/secret.
