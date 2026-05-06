@@ -102,6 +102,8 @@ spec:
   - name: cluster
     port: 8082
     targetPort: 8082
+# Note: External access is now handled by HAProxy
+# This service is for internal cluster access only
 ---
 apiVersion: v1
 kind: Service
@@ -114,4 +116,4 @@ spec:
   - name: https
     port: 8443
     targetPort: 8443
-  type: LoadBalancer
+  type: ClusterIP

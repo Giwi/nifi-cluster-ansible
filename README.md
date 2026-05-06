@@ -136,10 +136,11 @@ NiFi Cluster (3 nodes as Podman containers)
 
 ## Kubernetes Deployment
 
-See [k8s/README.md](k8s/README.md) for deploying the clusters on Kubernetes using native manifests.
+See [k8s/README.md](k8s/README.md) for deploying the clusters on Kubernetes using native manifests. Includes HAProxy as load balancer.
 
 Quick start:
 ```bash
 kubectl apply -f k8s/zookeeper/
 kubectl apply -f k8s/nifi/
+kubectl apply -f k8s/haproxy/
 ```

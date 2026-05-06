@@ -10,3 +10,9 @@
   become: yes
   roles:
     - nifi
+
+- name: Deploy HAProxy Load Balancer
+  hosts: haproxy
+  become: yes
+  roles:
+    - haproxy

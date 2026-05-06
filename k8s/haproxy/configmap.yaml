@@ -1,0 +1,40 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: haproxy-config
+data:
+  haproxy.cfg: |
+    global
+        log stdout format raw local0
+        maxconn 4096
+        daemon
+
+    defaults
+        log     global
+        mode    tcp
+        option  tcplog
+        option  dontlognull
+        timeout connect 5000ms
+        timeout client  50000ms
+        timeout server  50000ms
+
+    frontend nifi_frontend
+        bind *:8443
+        mode tcp
+        default_backend nifi_backend
+
+    backend nifi_backend
+        mode tcp
+        option ssl-hello-chk
+        balance roundrobin
+        server nifi-0 nifi-0.nifi-headless:8443 check
+        server nifi-1 nifi-1.nifi-headless:8443 check
+        server nifi-2 nifi-2.nifi-headless:8443 check
+
+    listen stats
+        bind *:8404
+        mode http
+        stats enable
+        stats uri /stats
+        stats refresh 10s
+        stats admin if TRUE

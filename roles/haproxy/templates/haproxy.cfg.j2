@@ -1,0 +1,46 @@
+global
+    log /dev/log local0
+    log /dev/log local1 notice
+    maxconn 4096
+    daemon
+
+defaults
+    log     global
+    mode    tcp
+    option  tcplog
+    option  dontlognull
+    timeout connect 5000ms
+    timeout client  50000ms
+    timeout server  50000ms
+
+frontend nifi_frontend
+    bind *:{{ haproxy_frontend_port }}
+{% if haproxy_ssl_termination %}
+    mode http
+    bind *:{{ haproxy_frontend_port }} ssl crt {{ haproxy_ssl_cert }}
+{% else %}
+    mode tcp
+{% endif %}
+    default_backend nifi_backend
+
+backend nifi_backend
+{% if haproxy_ssl_termination %}
+    mode http
+    option httpchk GET /nifi
+    http-check expect status 200
+{% else %}
+    mode tcp
+    option ssl-hello-chk
+{% endif %}
+    balance roundrobin
+{% for host in groups['nifi'] %}
+    server {{ hostvars[host]['inventory_hostname'] }} {{ hostvars[host]['ansible_host'] }}:{{ haproxy_nifi_backend_port }} check
+{% endfor %}
+
+listen stats
+    bind *:{{ haproxy_stats_port }}
+    mode http
+    stats enable
+    stats uri /stats
+    stats refresh 10s
+    stats admin if TRUE

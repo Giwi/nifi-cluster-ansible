@@ -1,0 +1,46 @@
+---
+- name: Install HAProxy
+  apt:
+    name:
+      - haproxy
+      - openssl
+    state: present
+    update_cache: yes
+
+- name: Deploy HAProxy configuration
+  template:
+    src: haproxy.cfg.j2
+    dest: /etc/haproxy/haproxy.cfg
+    mode: '0644'
+    validate: haproxy -c -f %s
+  notify: restart haproxy
+
+- name: Create SSL certificate directory
+  file:
+    path: /etc/haproxy/certs
+    state: directory
+    mode: '0700'
+  when: haproxy_ssl_termination
+
+- name: Generate self-signed certificate for HAProxy (if SSL termination enabled)
+  command: >
+    openssl req -x509 -nodes -days 365 -newkey rsa:2048
+    -keyout /etc/haproxy/certs/nifi.key
+    -out /etc/haproxy/certs/nifi.crt
+    -subj "/CN=nifi-cluster"
+  args:
+    creates: /etc/haproxy/certs/nifi.pem
+  when: haproxy_ssl_termination
+
+- name: Combine certificate and key for HAProxy
+  shell: cat /etc/haproxy/certs/nifi.crt /etc/haproxy/certs/nifi.key > /etc/haproxy/certs/nifi.pem
+  args:
+    creates: /etc/haproxy/certs/nifi.pem
+  when: haproxy_ssl_termination
+  notify: restart haproxy
+
+- name: Start and enable HAProxy
+  systemd:
+    name: haproxy
+    state: started
+    enabled: yes

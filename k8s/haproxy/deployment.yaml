@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: haproxy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: haproxy
+  template:
+    metadata:
+      labels:
+        app: haproxy
+    spec:
+      containers:
+      - name: haproxy
+        image: haproxy:2.8
+        ports:
+        - containerPort: 8443
+          name: https
+        - containerPort: 8404
+          name: stats
+        volumeMounts:
+        - name: config
+          mountPath: /usr/local/etc/haproxy/haproxy.cfg
+          subPath: haproxy.cfg
+        - name: certs
+          mountPath: /etc/haproxy/certs
+          readOnly: true
+      volumes:
+      - name: config
+        configMap:
+          name: haproxy-config
+      - name: certs
+        secret:
+          secretName: haproxy-certs
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: haproxy
+spec:
+  selector:
+    app: haproxy
+  ports:
+  - name: https
+    port: 8443
+    targetPort: 8443
+  - name: stats
+    port: 8404
+    targetPort: 8404
+  type: LoadBalancer

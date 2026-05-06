@@ -1,0 +1,7 @@
+---
+haproxy_stats_port: 8404
+haproxy_nifi_backend_port: 8443
+haproxy_frontend_port: 8443
+haproxy_ssl_cert: "/etc/haproxy/nifi.pem"
+# Set to true if HAProxy should terminate SSL (requires certificate)
+haproxy_ssl_termination: false
