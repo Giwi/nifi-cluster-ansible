@@ -1,5 +1,5 @@
 ---
-zookeeper_version: "3.9.2"
+zookeeper_version: "3.9.5"
 zookeeper_client_port: 2181
 zookeeper_leader_port: 2888
 zookeeper_election_port: 3888
