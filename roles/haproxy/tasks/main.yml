@@ -26,20 +26,11 @@
     mode: '0700'
   when: haproxy_ssl_termination
 
-- name: Generate self-signed certificate for HAProxy (if SSL termination enabled)
-  command: >
-    openssl req -x509 -nodes -days 365 -newkey rsa:2048
-    -keyout /etc/haproxy/certs/nifi.key
-    -out /etc/haproxy/certs/nifi.crt
-    -subj "/CN=nifi-cluster"
-  args:
-    creates: /etc/haproxy/certs/nifi.pem
-  when: haproxy_ssl_termination
-
-- name: Combine certificate and key for HAProxy
-  shell: cat /etc/haproxy/certs/nifi.crt /etc/haproxy/certs/nifi.key > /etc/haproxy/certs/nifi.pem
-  args:
-    creates: /etc/haproxy/certs/nifi.pem
+- name: Copy provided SSL certificate for HAProxy
+  copy:
+    src: "{{ playbook_dir }}/files/{{ haproxy_provided_cert }}"
+    dest: "{{ haproxy_ssl_cert }}"
+    mode: '0600'
   when: haproxy_ssl_termination
   notify: restart haproxy
 

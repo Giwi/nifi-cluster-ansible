@@ -32,8 +32,8 @@ defaults
     timeout server  50000ms
 
 frontend nifi_frontend
-    bind *:8443
-    mode tcp
+    bind *:8443 ssl crt /etc/haproxy/certs/nifi.pem
+    mode http
     default_backend nifi_backend
 
 backend nifi_backend
@@ -61,9 +61,11 @@ podman run -d \
     -p 8443:8443 \
     -p 8404:8404 \
     -v /etc/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro \
+    -v /etc/haproxy/certs:/etc/haproxy/certs:ro \
     --restart always \
     haproxy:2.8
 
 echo "HAProxy deployed successfully!"
+echo "NOTE: Make sure to place your nifi.pem certificate at /etc/haproxy/certs/nifi.pem"
 echo "Access NiFi at: https://localhost:8443/nifi"
 echo "HAProxy stats at: http://localhost:8404/stats"

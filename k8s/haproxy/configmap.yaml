@@ -19,8 +19,8 @@ data:
         timeout server  50000ms
 
     frontend nifi_frontend
-        bind *:8443
-        mode tcp
+        bind *:8443 ssl crt /etc/haproxy/certs/nifi.pem
+        mode http
         default_backend nifi_backend
 
     backend nifi_backend

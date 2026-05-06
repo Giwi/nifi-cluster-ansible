@@ -133,6 +133,15 @@ NiFi Cluster (3 nodes as Podman containers)
 - ZooKeeper: `bitnami/zookeeper`
 - NiFi: `apache/nifi`
 
+## HAProxy SSL Certificate
+
+To use a provided SSL certificate with HAProxy (Ansible deployment):
+1. Place your `nifi.pem` (cert+key combined) in `files/nifi.pem`
+2. Set `haproxy_ssl_termination: true` in `group_vars/haproxy.yml`
+3. Deploy: `ansible-playbook -i inventory/hosts.ini site.yml --limit haproxy`
+
+For Kubernetes HAProxy, see [k8s/haproxy/README.md](k8s/haproxy/README.md)
+
 ## Notes
 
 - Minimum 3 servers recommended for ZooKeeper quorum

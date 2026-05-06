@@ -34,6 +34,7 @@ spec:
       - name: certs
         secret:
           secretName: haproxy-certs
+        mountPath: /etc/haproxy/certs
 ---
 apiVersion: v1
 kind: Service
