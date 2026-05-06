@@ -1,0 +1,15 @@
+---
+zookeeper_version: "3.9.2"
+zookeeper_client_port: 2181
+zookeeper_leader_port: 2888
+zookeeper_election_port: 3888
+zookeeper_data_dir: "/var/lib/zookeeper"
+zookeeper_docker_network: "zookeeper-network"
+
+zookeeper_servers:
+  - id: 1
+    host: "{{ hostvars['zk1']['ansible_host'] }}"
+  - id: 2
+    host: "{{ hostvars['zk2']['ansible_host'] }}"
+  - id: 3
+    host: "{{ hostvars['zk3']['ansible_host'] }}"

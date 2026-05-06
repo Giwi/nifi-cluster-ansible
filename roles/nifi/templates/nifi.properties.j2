@@ -1,0 +1,66 @@
+# Core Properties
+nifi.flow.configuration.file=/opt/nifi/nifi-current/conf/flow.xml.gz
+nifi.flow.configuration.archive.dir=/opt/nifi/nifi-current/conf/archive/
+nifi.state.management.configuration.file=/opt/nifi/nifi-current/conf/state-management.xml
+nifi.state.management.provider.local=local-provider
+nifi.state.management.provider.cluster=zk-provider
+
+# Cluster Node Properties
+nifi.cluster.is.node=true
+nifi.cluster.node.address={{ ansible_host }}
+nifi.cluster.node.protocol.port={{ nifi_cluster_node_protocol_port }}
+nifi.cluster.node.protocol.max.threads=50
+nifi.cluster.node.protocol.threads=30
+nifi.cluster.load.balance.port=6342
+nifi.cluster.load.balance.address={{ ansible_host }}
+
+# ZooKeeper Properties
+nifi.zookeeper.connect.string={{ nifi_zookeeper_connect_string }}
+nifi.zookeeper.connect.timeout=30 secs
+nifi.zookeeper.session.timeout=30 secs
+nifi.zookeeper.root.node=/nifi
+
+# Web Properties
+{% if nifi_use_keycloak %}
+nifi.web.https.host={{ ansible_host }}
+nifi.web.https.port={{ nifi_web_https_port }}
+nifi.web.http.host=
+nifi.web.http.port=
+{% else %}
+nifi.web.http.host={{ ansible_host }}
+nifi.web.http.port={{ nifi_web_http_port }}
+nifi.web.https.host=
+nifi.web.https.port=
+{% endif %}
+nifi.web.jetty.working.directory=/opt/nifi/nifi-current/work/jetty
+
+# Sensitive Properties
+nifi.sensitive.props.key={{ nifi_sensitive_props_key }}
+nifi.sensitive.props.algorithm=NIFI_PBKDF2_AES_GCM256
+
+# Security Properties
+{% if nifi_use_keycloak %}
+nifi.security.keystore=
+nifi.security.keystoreType=
+nifi.security.keystorePasswd=
+nifi.security.keyPasswd=
+nifi.security.truststore=
+nifi.security.truststoreType=
+nifi.security.truststorePasswd=
+nifi.security.user.authorizer=managed-authorizer
+nifi.security.allow.anonymous.authentication=false
+nifi.security.user.login.identity.provider=oidc-identity-provider
+nifi.security.identity.mapping.pattern.oidc={{ ansible_host }}
+nifi.security.identity.mapping.value.oidc=$1
+{% else %}
+nifi.security.keystore=
+nifi.security.keystoreType=
+nifi.security.keystorePasswd=
+nifi.security.keyPasswd=
+nifi.security.truststore=
+nifi.security.truststoreType=
+nifi.security.truststorePasswd=
+nifi.security.user.authorizer=managed-authorizer
+nifi.security.allow.anonymous.authentication=false
+nifi.security.user.login.identity.provider=
+{% endif %}

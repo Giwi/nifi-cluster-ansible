@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<authorizers>
+    <userGroupProvider>
+        <identifier>file-user-group-provider</identifier>
+        <class>org.apache.nifi.authorization.FileUserGroupProvider</class>
+        <property name="Users File">/opt/nifi/nifi-current/conf/users.xml</property>
+        <property name="Legacy Authorized Users File"></property>
+        <property name="Node Identity 1"></property>
+    </userGroupProvider>
+    <accessPolicyProvider>
+        <identifier>file-access-policy-provider</identifier>
+        <class>org.apache.nifi.authorization.FileAccessPolicyProvider</class>
+        <property name="User Group Provider">file-user-group-provider</property>
+        <property name="Authorizations File">/opt/nifi/nifi-current/conf/authorizations.xml</property>
+        {% if nifi_use_keycloak and nifi_initial_admin %}
+        <property name="Initial Admin Identity">{{ nifi_initial_admin }}</property>
+        {% else %}
+        <property name="Initial Admin Identity"></property>
+        {% endif %}
+        <property name="Node Group"></property>
+        <property name="Node Identity 1"></property>
+    </accessPolicyProvider>
+    <authorizer>
+        <identifier>managed-authorizer</identifier>
+        <class>org.apache.nifi.authorization.StandardManagedAuthorizer</class>
+        <property name="Access Policy Provider">file-access-policy-provider</property>
+    </authorizer>
+</authorizers>

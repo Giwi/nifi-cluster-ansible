@@ -1,0 +1,12 @@
+---
+- name: Deploy ZooKeeper Cluster
+  hosts: zookeeper
+  become: yes
+  roles:
+    - zookeeper
+
+- name: Deploy NiFi Cluster
+  hosts: nifi
+  become: yes
+  roles:
+    - nifi

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<loginIdentityProviders>
+    {% if nifi_use_keycloak %}
+    <provider>
+        <identifier>oidc-identity-provider</identifier>
+        <class>org.apache.nifi.oidc.OIDCIdentityProvider</class>
+        <property name="Authorization Server URL">{{ keycloak_url }}/realms/{{ keycloak_realm }}</property>
+        <property name="Client ID">{{ keycloak_client_id }}</property>
+        <property name="Client Secret">{{ keycloak_client_secret }}</property>
+        <property name="Scope">openid profile email</property>
+        <property name="Claim Identifying User">email</property>
+    </provider>
+    {% endif %}
+</loginIdentityProviders>

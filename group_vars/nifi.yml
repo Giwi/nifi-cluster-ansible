@@ -1,0 +1,17 @@
+---
+nifi_version: "1.25.0"
+nifi_cluster_node_protocol_port: 8082
+nifi_web_http_port: 8080
+nifi_web_https_port: 8443
+nifi_use_https: false
+nifi_zookeeper_connect_string: "{{ groups['zookeeper'] | map('extract', hostvars, 'ansible_host') | map('regex_replace', '^(.*)$', '\\1:2181') | join(',') }}"
+nifi_sensitive_props_key: "nifiproxypass"
+nifi_docker_network: "nifi-network"
+
+# Keycloak OIDC Authentication
+nifi_use_keycloak: false
+keycloak_url: "https://keycloak.example.com"
+keycloak_realm: "nifi"
+keycloak_client_id: "nifi-client"
+keycloak_client_secret: "change-me"
+nifi_initial_admin: ""  # Keycloak user to set as initial NiFi admin

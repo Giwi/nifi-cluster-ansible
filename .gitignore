@@ -1,0 +1,38 @@
+# Ansible vault files
+*.vault
+*.vault.yml
+
+# Sensitive variables
+group_vars/*/vault.yml
+host_vars/*/vault.yml
+
+# SSH keys
+*.pem
+*.key
+id_rsa
+id_rsa.pub
+
+# Temporary files
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Ansible retry files
+*.retry
+
+# Python
+__pycache__/
+*.pyc
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# Logs
+*.log
+logs/
+
+# OS
+Thumbs.db

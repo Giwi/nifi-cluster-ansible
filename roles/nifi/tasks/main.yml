@@ -1,0 +1,95 @@
+---
+- name: Install Podman
+  apt:
+    name:
+      - podman
+      - podman-docker
+    state: present
+    update_cache: yes
+
+- name: Create nifi directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+    owner: root
+    group: root
+  loop:
+    - /opt/nifi/conf
+    - /opt/nifi/data
+    - /opt/nifi/logs
+
+- name: Configure nifi.properties
+  template:
+    src: nifi.properties.j2
+    dest: /opt/nifi/conf/nifi.properties
+    mode: '0644'
+
+- name: Configure login-identity-providers.xml
+  template:
+    src: login-identity-providers.xml.j2
+    dest: /opt/nifi/conf/login-identity-providers.xml
+    mode: '0644'
+
+- name: Configure authorizers.xml
+  template:
+    src: authorizers.xml.j2
+    dest: /opt/nifi/conf/authorizers.xml
+    mode: '0644'
+
+- name: Create Podman network for NiFi
+  command: podman network create {{ nifi_docker_network }}
+  args:
+    creates: /etc/cni/net.d/{{ nifi_docker_network }}.conflist
+  register: network_result
+  failed_when: network_result.rc != 0 and "already exists" not in network_result.stderr
+
+- name: Stop existing NiFi container if running
+  command: podman stop nifi
+  register: stop_result
+  failed_when: stop_result.rc != 0 and "no such container" not in stop_result.stderr
+  changed_when: stop_result.rc == 0
+
+- name: Remove existing NiFi container if exists
+  command: podman rm nifi
+  register: rm_result
+  failed_when: rm_result.rc != 0 and "no such container" not in rm_result.stderr
+  changed_when: rm_result.rc == 0
+
+- name: Deploy NiFi container
+  command: >
+    podman run -d
+    --name nifi
+    --network {{ nifi_docker_network }}
+    {% if nifi_use_keycloak %}
+    -p {{ nifi_web_https_port }}:8443
+    {% else %}
+    -p {{ nifi_web_http_port }}:8080
+    {% endif %}
+    -p {{ nifi_cluster_node_protocol_port }}:8082
+    -v /opt/nifi/conf/nifi.properties:/opt/nifi/nifi-current/conf/nifi.properties:ro
+    -v /opt/nifi/conf/login-identity-providers.xml:/opt/nifi/nifi-current/conf/login-identity-providers.xml:ro
+    -v /opt/nifi/conf/authorizers.xml:/opt/nifi/nifi-current/conf/authorizers.xml:ro
+    -v /opt/nifi/data:/opt/nifi/nifi-current/data
+    -v /opt/nifi/logs:/opt/nifi/nifi-current/logs
+    -e NIFI_CLUSTER_IS_NODE=true
+    -e NIFI_CLUSTER_NODE_ADDRESS={{ ansible_host }}
+    -e NIFI_ZK_CONNECT_STRING={{ nifi_zookeeper_connect_string }}
+    -e NIFI_SENSITIVE_PROPS_KEY={{ nifi_sensitive_props_key }}
+    {% if nifi_use_keycloak %}
+    -e NIFI_WEB_HTTPS_PORT={{ nifi_web_https_port }}
+    -e NIFI_SECURITY_USER_LOGIN_IDENTITY_PROVIDER=oidc-identity-provider
+    {% else %}
+    -e NIFI_WEB_HTTP_PORT={{ nifi_web_http_port }}
+    {% endif %}
+    --restart always
+    apache/nifi:{{ nifi_version }}
+  register: podman_run
+  changed_when: podman_run.rc == 0
+
+- name: Wait for NiFi to start
+  wait_for:
+    host: localhost
+    port: "{{ nifi_web_http_port }}"
+    delay: 30
+    timeout: 120

@@ -1,0 +1,73 @@
+---
+- name: Install Podman
+  apt:
+    name:
+      - podman
+      - podman-docker
+    state: present
+    update_cache: yes
+
+- name: Create zookeeper user
+  user:
+    name: zookeeper
+    system: yes
+    shell: /bin/bash
+
+- name: Create data directory
+  file:
+    path: "{{ zookeeper_data_dir }}"
+    state: directory
+    mode: '0755'
+    owner: zookeeper
+    group: zookeeper
+
+- name: Create Podman network for ZooKeeper
+  command: podman network create {{ zookeeper_docker_network }}
+  args:
+    creates: /etc/cni/net.d/{{ zookeeper_docker_network }}.conflist
+  register: network_result
+  failed_when: network_result.rc != 0 and "already exists" not in network_result.stderr
+
+- name: Get ZooKeeper server ID
+  set_fact:
+    zk_server_id: "{{ zookeeper_servers | selectattr('host', 'equalto', ansible_host) | map(attribute='id') | first }}"
+
+- name: Build ZooKeeper servers string
+  set_fact:
+    zk_servers_string: "{% for server in zookeeper_servers %}server.{{ server.id }}={{ server.host }}:2888:3888 {% endfor %}"
+
+- name: Stop existing ZooKeeper container if running
+  command: podman stop zookeeper
+  register: stop_result
+  failed_when: stop_result.rc != 0 and "no such container" not in stop_result.stderr
+  changed_when: stop_result.rc == 0
+
+- name: Remove existing ZooKeeper container if exists
+  command: podman rm zookeeper
+  register: rm_result
+  failed_when: rm_result.rc != 0 and "no such container" not in rm_result.stderr
+  changed_when: rm_result.rc == 0
+
+- name: Deploy ZooKeeper container
+  command: >
+    podman run -d
+    --name zookeeper
+    --network {{ zookeeper_docker_network }}
+    -p {{ zookeeper_client_port }}:2181
+    -p {{ zookeeper_leader_port }}:2888
+    -p {{ zookeeper_election_port }}:3888
+    -v {{ zookeeper_data_dir }}:/bitnami/zookeeper
+    -e ZOO_SERVER_ID={{ zk_server_id }}
+    -e ZOO_SERVERS={{ zk_servers_string }}
+    -e ALLOW_ANONYMOUS_LOGIN=yes
+    --restart always
+    bitnami/zookeeper:{{ zookeeper_version }}
+  register: podman_run
+  changed_when: podman_run.rc == 0
+
+- name: Wait for ZooKeeper to start
+  wait_for:
+    host: localhost
+    port: "{{ zookeeper_client_port }}"
+    delay: 10
+    timeout: 60
