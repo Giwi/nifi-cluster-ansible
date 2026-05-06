@@ -30,6 +30,22 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
+        - name: ZOO_TLS_CLIENT_ENABLED
+          value: "true"
+        - name: ZOO_TLS_KEYSTORE_FILE
+          value: "/opt/zookeeper-ssl/keystore.jks"
+        - name: ZOO_TLS_TRUSTSTORE_FILE
+          value: "/opt/zookeeper-ssl/truststore.jks"
+        - name: ZOO_TLS_KEYSTORE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: zookeeper-ssl
+              key: keystore-password
+        - name: ZOO_TLS_TRUSTSTORE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: zookeeper-ssl
+              key: truststore-password
         command: ["/bin/bash", "-c"]
         args:
           - |
@@ -37,6 +53,16 @@ spec:
             export ZOO_SERVER_ID=$((ORDINAL + 1))
             export ZOO_SERVERS="server.1=zookeeper-0.zookeeper-headless:2888:3888 server.2=zookeeper-1.zookeeper-headless:2888:3888 server.3=zookeeper-2.zookeeper-headless:2888:3888"
             exec /entrypoint.sh /run.sh
+        volumeMounts:
+        - name: ssl
+          mountPath: /opt/zookeeper-ssl
+          readOnly: true
+      volumes:
+      - name: ssl
+        secret:
+          secretName: zookeeper-ssl
+      - name: data
+        emptyDir: {}
         volumeMounts:
         - name: data
           mountPath: /bitnami/zookeeper

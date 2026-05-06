@@ -21,6 +21,29 @@
     owner: zookeeper
     group: zookeeper
 
+- name: Create SSL directory
+  file:
+    path: "{{ zookeeper_ssl_dir }}"
+    state: directory
+    mode: '0755'
+  when: zookeeper_ssl_enabled
+
+- name: Copy custom keystore
+  copy:
+    src: "{{ playbook_dir }}/files/{{ zookeeper_keystore_file }}"
+    dest: "{{ zookeeper_keystore_path }}"
+    mode: '0600'
+  when: zookeeper_ssl_enabled
+  notify: restart zookeeper
+
+- name: Copy custom truststore
+  copy:
+    src: "{{ playbook_dir }}/files/{{ zookeeper_truststore_file }}"
+    dest: "{{ zookeeper_truststore_path }}"
+    mode: '0600'
+  when: zookeeper_ssl_enabled
+  notify: restart zookeeper
+
 - name: Create Podman network for ZooKeeper
   command: podman network create {{ zookeeper_docker_network }}
   args:
@@ -54,12 +77,26 @@
     --name zookeeper
     --network {{ zookeeper_docker_network }}
     -p {{ zookeeper_client_port }}:2181
+    {% if zookeeper_ssl_enabled %}
+    -p {{ zookeeper_client_ssl_port }}:2281
+    {% endif %}
     -p {{ zookeeper_leader_port }}:2888
     -p {{ zookeeper_election_port }}:3888
     -v {{ zookeeper_data_dir }}:/bitnami/zookeeper
+    {% if zookeeper_ssl_enabled %}
+    -v {{ zookeeper_keystore_path }}:{{ zookeeper_keystore_path }}:ro
+    -v {{ zookeeper_truststore_path }}:{{ zookeeper_truststore_path }}:ro
+    {% endif %}
     -e ZOO_SERVER_ID={{ zk_server_id }}
     -e ZOO_SERVERS={{ zk_servers_string }}
     -e ALLOW_ANONYMOUS_LOGIN=yes
+    {% if zookeeper_ssl_enabled %}
+    -e ZOO_TLS_CLIENT_ENABLED=true
+    -e ZOO_TLS_KEYSTORE_FILE={{ zookeeper_keystore_path }}
+    -e ZOO_TLS_TRUSTSTORE_FILE={{ zookeeper_truststore_path }}
+    -e ZOO_TLS_KEYSTORE_PASSWORD={{ zookeeper_keystore_password }}
+    -e ZOO_TLS_TRUSTSTORE_PASSWORD={{ zookeeper_truststore_password }}
+    {% endif %}
     --restart always
     bitnami/zookeeper:{{ zookeeper_version }}
   register: podman_run

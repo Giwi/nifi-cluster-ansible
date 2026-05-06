@@ -95,7 +95,11 @@
     {% endif %}
     -e NIFI_CLUSTER_IS_NODE=true
     -e NIFI_CLUSTER_NODE_ADDRESS={{ ansible_host }}
-    -e NIFI_ZK_CONNECT_STRING={{ nifi_zookeeper_connect_string }}
+        {% if zookeeper_ssl_enabled is defined and zookeeper_ssl_enabled %}
+        -e NIFI_ZK_CONNECT_STRING={{ nifi_zookeeper_connect_string_ssl }}
+        {% else %}
+        -e NIFI_ZK_CONNECT_STRING={{ nifi_zookeeper_connect_string }}
+        {% endif %}
     -e NIFI_SENSITIVE_PROPS_KEY={{ nifi_sensitive_props_key }}
     {% if nifi_use_keycloak %}
     -e NIFI_WEB_HTTPS_PORT={{ nifi_web_https_port }}

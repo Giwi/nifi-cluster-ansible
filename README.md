@@ -58,8 +58,12 @@ ansible nifi -i inventory/hosts.ini -m shell -a "podman exec nifi bash -c 'echo 
 ## Configuration
 
 ### ZooKeeper Variables (`group_vars/zookeeper.yml`):
-- `zookeeper_version`: ZooKeeper image version (default: 3.9.2)
+- `zookeeper_version`: ZooKeeper image version (default: 3.9.5)
 - `zookeeper_client_port`: Client connection port (default: 2181)
+- `zookeeper_ssl_enabled`: Enable SSL/TLS for ZooKeeper (default: false)
+- `zookeeper_keystore_password`: Keystore password
+- `zookeeper_truststore_password`: Truststore password
+- Place `keystore.jks` and `truststore.jks` in `files/` directory
 
 ### NiFi Variables (`group_vars/nifi.yml`):
 - `nifi_version`: NiFi image version (default: 1.25.0)

@@ -6,6 +6,17 @@ zookeeper_election_port: 3888
 zookeeper_data_dir: "/var/lib/zookeeper"
 zookeeper_docker_network: "zookeeper-network"
 
+# ZooKeeper SSL/TLS Configuration
+zookeeper_ssl_enabled: false
+zookeeper_ssl_dir: "/opt/zookeeper/ssl"
+zookeeper_keystore_file: "keystore.jks"
+zookeeper_keystore_path: "{{ zookeeper_ssl_dir }}/{{ zookeeper_keystore_file }}"
+zookeeper_keystore_password: "changeit"
+zookeeper_truststore_file: "truststore.jks"
+zookeeper_truststore_path: "{{ zookeeper_ssl_dir }}/{{ zookeeper_truststore_file }}"
+zookeeper_truststore_password: "changeit"
+zookeeper_client_ssl_port: 2281
+
 zookeeper_servers:
   - id: 1
     host: "{{ hostvars['zk1']['ansible_host'] }}"

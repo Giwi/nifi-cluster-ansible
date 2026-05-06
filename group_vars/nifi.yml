@@ -5,6 +5,8 @@ nifi_web_http_port: 8080
 nifi_web_https_port: 8443
 nifi_use_https: false
 nifi_zookeeper_connect_string: "{{ groups['zookeeper'] | map('extract', hostvars, 'ansible_host') | map('regex_replace', '^(.*)$', '\\1:2181') | join(',') }}"
+# Use SSL port if ZooKeeper SSL is enabled
+nifi_zookeeper_connect_string_ssl: "{{ groups['zookeeper'] | map('extract', hostvars, 'ansible_host') | map('regex_replace', '^(.*)$', '\\1:2281') | join(',') }}"
 nifi_sensitive_props_key: "nifiproxypass"
 nifi_docker_network: "nifi-network"
 

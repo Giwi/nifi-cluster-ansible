@@ -16,7 +16,16 @@ kubectl apply -f nifi/secrets.yaml.example
 kubectl create secret generic nifi-ssl --from-file=../files/keystore.jks --from-file=../files/truststore.jks
 ```
 
-2. Deploy ZooKeeper:
+2. Create ZooKeeper SSL secrets (if using SSL):
+```bash
+kubectl create secret generic zookeeper-ssl \
+  --from-file=keystore.jks=../files/keystore.jks \
+  --from-file=truststore.jks=../files/truststore.jks \
+  --from-literal=keystore-password='changeit' \
+  --from-literal=truststore-password='changeit'
+```
+
+3. Deploy ZooKeeper:
 ```bash
 kubectl apply -f zookeeper/
 ```
