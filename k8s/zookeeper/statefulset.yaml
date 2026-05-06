@@ -54,6 +54,8 @@ spec:
             export ZOO_SERVERS="server.1=zookeeper-0.zookeeper-headless:2888:3888 server.2=zookeeper-1.zookeeper-headless:2888:3888 server.3=zookeeper-2.zookeeper-headless:2888:3888"
             exec /entrypoint.sh /run.sh
         volumeMounts:
+        - name: data
+          mountPath: /bitnami/zookeeper
         - name: ssl
           mountPath: /opt/zookeeper-ssl
           readOnly: true
@@ -61,12 +63,6 @@ spec:
       - name: ssl
         secret:
           secretName: zookeeper-ssl
-      - name: data
-        emptyDir: {}
-        volumeMounts:
-        - name: data
-          mountPath: /bitnami/zookeeper
-      volumes:
       - name: data
         emptyDir: {}
 ---
@@ -82,6 +78,9 @@ spec:
   - name: client
     port: 2181
     targetPort: 2181
+  - name: client-ssl
+    port: 2281
+    targetPort: 2281
   - name: leader
     port: 2888
     targetPort: 2888
@@ -100,4 +99,7 @@ spec:
   - name: client
     port: 2181
     targetPort: 2181
+  - name: client-ssl
+    port: 2281
+    targetPort: 2281
   type: ClusterIP
