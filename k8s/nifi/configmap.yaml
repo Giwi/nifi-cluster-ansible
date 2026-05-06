@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nifi-config
+data:
+  login-identity-providers.xml: |
+    <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+    <loginIdentityProviders>
+      <provider>
+        <identifier>oidc-identity-provider</identifier>
+        <class>org.apache.nifi.oidc.OIDCIdentityProvider</class>
+        <property name="Authorization Server URL">${KEYCLOAK_URL}/realms/${KEYCLOAK_REALM}</property>
+        <property name="Client ID">${KEYCLOAK_CLIENT_ID}</property>
+        <property name="Client Secret">${KEYCLOAK_CLIENT_SECRET}</property>
+        <property name="Scope">openid profile email</property>
+        <property name="Claim Identifying User">email</property>
+      </provider>
+    </loginIdentityProviders>
+  authorizers.xml: |
+    <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+    <authorizers>
+      <userGroupProvider>
+        <identifier>file-user-group-provider</identifier>
+        <class>org.apache.nifi.authorization.FileUserGroupProvider</class>
+        <property name="Users File">/opt/nifi/nifi-current/conf/users.xml</property>
+        <property name="Legacy Authorized Users File"></property>
+      </userGroupProvider>
+      <accessPolicyProvider>
+        <identifier>file-access-policy-provider</identifier>
+        <class>org.apache.nifi.authorization.FileAccessPolicyProvider</class>
+        <property name="User Group Provider">file-user-group-provider</property>
+        <property name="Initial Admin Identity">${NIFI_INITIAL_ADMIN}</property>
+      </accessPolicyProvider>
+      <authorizer>
+        <identifier>managed-authorizer</identifier>
+        <class>org.apache.nifi.authorization.StandardManagedAuthorizer</class>
+        <property name="Access Policy Provider">file-access-policy-provider</property>
+      </authorizer>
+    </authorizers>

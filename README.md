@@ -133,3 +133,13 @@ NiFi Cluster (3 nodes as Podman containers)
 - Podman is daemonless, containers run as systemd services via --restart always
 - Data is persisted using bind mounts
 - Adjust resources based on your server capacity
+
+## Kubernetes Deployment
+
+See [k8s/README.md](k8s/README.md) for deploying the clusters on Kubernetes using native manifests.
+
+Quick start:
+```bash
+kubectl apply -f k8s/zookeeper/
+kubectl apply -f k8s/nifi/
+```

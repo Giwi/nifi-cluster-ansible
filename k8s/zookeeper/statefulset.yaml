@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: zookeeper
+spec:
+  serviceName: zookeeper-headless
+  replicas: 3
+  selector:
+    matchLabels:
+      app: zookeeper
+  template:
+    metadata:
+      labels:
+        app: zookeeper
+    spec:
+      containers:
+      - name: zookeeper
+        image: bitnami/zookeeper:3.9.5
+        ports:
+        - containerPort: 2181
+          name: client
+        - containerPort: 2888
+          name: leader
+        - containerPort: 3888
+          name: election
+        env:
+        - name: ALLOW_ANONYMOUS_LOGIN
+          value: "yes"
+        - name: ZOO_SERVER_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        command: ["/bin/bash", "-c"]
+        args:
+          - |
+            ORDINAL=$(hostname | awk -F'-' '{print $NF}')
+            export ZOO_SERVER_ID=$((ORDINAL + 1))
+            export ZOO_SERVERS="server.1=zookeeper-0.zookeeper-headless:2888:3888 server.2=zookeeper-1.zookeeper-headless:2888:3888 server.3=zookeeper-2.zookeeper-headless:2888:3888"
+            exec /entrypoint.sh /run.sh
+        volumeMounts:
+        - name: data
+          mountPath: /bitnami/zookeeper
+      volumes:
+      - name: data
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zookeeper-headless
+spec:
+  clusterIP: None
+  selector:
+    app: zookeeper
+  ports:
+  - name: client
+    port: 2181
+    targetPort: 2181
+  - name: leader
+    port: 2888
+    targetPort: 2888
+  - name: election
+    port: 3888
+    targetPort: 3888
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zookeeper-client
+spec:
+  selector:
+    app: zookeeper
+  ports:
+  - name: client
+    port: 2181
+    targetPort: 2181
+  type: ClusterIP
