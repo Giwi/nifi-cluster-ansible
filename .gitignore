@@ -1,6 +1,7 @@
 # Ansible vault files
 *.vault
 *.vault.yml
+group_vars/all/vault.yml
 
 # Sensitive variables
 group_vars/*/vault.yml

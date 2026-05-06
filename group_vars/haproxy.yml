@@ -7,3 +7,6 @@ haproxy_ssl_cert: "/etc/haproxy/certs/nifi.pem"
 haproxy_ssl_termination: false
 # Path to provided certificate file (PEM format with cert+key)
 haproxy_provided_cert: "nifi.pem"
+# HAProxy stats authentication
+haproxy_stats_user: "admin"
+haproxy_stats_password: "{{ vault_haproxy_stats_password }}"

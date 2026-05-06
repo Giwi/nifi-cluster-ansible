@@ -11,10 +11,10 @@ zookeeper_ssl_enabled: false
 zookeeper_ssl_dir: "/opt/zookeeper/ssl"
 zookeeper_keystore_file: "keystore.jks"
 zookeeper_keystore_path: "{{ zookeeper_ssl_dir }}/{{ zookeeper_keystore_file }}"
-zookeeper_keystore_password: "changeit"
+zookeeper_keystore_password: "{{ vault_zookeeper_keystore_password }}"
 zookeeper_truststore_file: "truststore.jks"
 zookeeper_truststore_path: "{{ zookeeper_ssl_dir }}/{{ zookeeper_truststore_file }}"
-zookeeper_truststore_password: "changeit"
+zookeeper_truststore_password: "{{ vault_zookeeper_truststore_password }}"
 zookeeper_client_ssl_port: 2281
 
 zookeeper_servers:

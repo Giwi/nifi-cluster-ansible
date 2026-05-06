@@ -2,17 +2,23 @@
 - name: Deploy ZooKeeper Cluster
   hosts: zookeeper
   become: yes
+  vars_files:
+    - group_vars/all/vault.yml
   roles:
     - zookeeper
 
 - name: Deploy NiFi Cluster
   hosts: nifi
   become: yes
+  vars_files:
+    - group_vars/all/vault.yml
   roles:
     - nifi
 
 - name: Deploy HAProxy Load Balancer
   hosts: haproxy
   become: yes
+  vars_files:
+    - group_vars/all/vault.yml
   roles:
     - haproxy

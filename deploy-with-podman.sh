@@ -25,4 +25,4 @@ podman run --rm \
     -w /workspace \
     --network=host \
     "$ANSIBLE_IMAGE" \
-    ansible-playbook -i inventory/hosts.ini "$@" site.yml
+    ansible-playbook -i inventory/hosts.ini --ask-vault-pass "$@" site.yml

@@ -18,9 +18,15 @@ Edit `inventory/hosts.ini` and update:
 
 ## Usage
 
+### Setup Ansible Vault (first time):
+```bash
+ansible-vault create group_vars/all/vault.yml
+# Copy variables from the example in VAULT.md
+```
+
 ### Deploy entire stack:
 ```bash
-ansible-playbook -i inventory/hosts.ini site.yml
+ansible-playbook -i inventory/hosts.ini --ask-vault-pass site.yml
 ```
 
 ### Deploy only ZooKeeper:
