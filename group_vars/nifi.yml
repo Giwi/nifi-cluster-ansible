@@ -1,5 +1,5 @@
 ---
-nifi_version: "1.25.0"
+nifi_version: "2.9.0"
 nifi_cluster_node_protocol_port: 8082
 nifi_web_http_port: 8080
 nifi_web_https_port: 8443
