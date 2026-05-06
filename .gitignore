@@ -34,5 +34,10 @@ __pycache__/
 *.log
 logs/
 
+# Custom SSL files
+files/*.jks
+files/*.p12
+files/*.pem
+
 # OS
 Thumbs.db

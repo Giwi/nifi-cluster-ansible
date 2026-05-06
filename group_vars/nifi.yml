@@ -15,3 +15,14 @@ keycloak_realm: "nifi"
 keycloak_client_id: "nifi-client"
 keycloak_client_secret: "change-me"
 nifi_initial_admin: ""  # Keycloak user to set as initial NiFi admin
+
+# Custom SSL Keystore and Truststore (required when nifi_use_keycloak is true)
+nifi_ssl_dir: "/opt/nifi/ssl"
+nifi_keystore_file: "keystore.jks"
+nifi_keystore_path: "{{ nifi_ssl_dir }}/{{ nifi_keystore_file }}"
+nifi_keystore_password: "changeit"
+nifi_keystore_type: "JKS"
+nifi_truststore_file: "truststore.jks"
+nifi_truststore_path: "{{ nifi_ssl_dir }}/{{ nifi_truststore_file }}"
+nifi_truststore_password: "changeit"
+nifi_truststore_type: "JKS"

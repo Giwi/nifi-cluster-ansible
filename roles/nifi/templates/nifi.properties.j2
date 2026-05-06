@@ -40,13 +40,13 @@ nifi.sensitive.props.algorithm=NIFI_PBKDF2_AES_GCM256
 
 # Security Properties
 {% if nifi_use_keycloak %}
-nifi.security.keystore=
-nifi.security.keystoreType=
-nifi.security.keystorePasswd=
-nifi.security.keyPasswd=
-nifi.security.truststore=
-nifi.security.truststoreType=
-nifi.security.truststorePasswd=
+nifi.security.keystore={{ nifi_keystore_path }}
+nifi.security.keystoreType={{ nifi_keystore_type }}
+nifi.security.keystorePasswd={{ nifi_keystore_password }}
+nifi.security.keyPasswd={{ nifi_keystore_password }}
+nifi.security.truststore={{ nifi_truststore_path }}
+nifi.security.truststoreType={{ nifi_truststore_type }}
+nifi.security.truststorePasswd={{ nifi_truststore_password }}
 nifi.security.user.authorizer=managed-authorizer
 nifi.security.allow.anonymous.authentication=false
 nifi.security.user.login.identity.provider=oidc-identity-provider

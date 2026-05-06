@@ -92,6 +92,20 @@ To enable Keycloak OIDC authentication:
    - Enable "Standard Flow" and "Direct Access Grants"
 4. Deploy NiFi: `ansible-playbook -i inventory/hosts.ini site.yml --limit nifi`
 
+## Custom SSL Keystore/Truststore
+
+When using Keycloak authentication, custom SSL certificates are required for HTTPS.
+
+1. Place your `keystore.jks` and `truststore.jks` files in the `files/` directory
+2. Update the following variables in `group_vars/nifi.yml`:
+   - `nifi_keystore_password`: Your keystore password
+   - `nifi_truststore_password`: Your truststore password
+   - `nifi_keystore_type`: Keystore type (JKS, PKCS12, etc.)
+   - `nifi_truststore_type`: Truststore type
+3. The files will be automatically copied to `/opt/nifi/ssl/` on each NiFi server and mounted into the container
+
+Note: SSL files in `files/` are not committed to git (see .gitignore)
+
 ## Cluster Architecture
 
 ```

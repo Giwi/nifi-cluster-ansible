@@ -18,6 +18,23 @@
     - /opt/nifi/conf
     - /opt/nifi/data
     - /opt/nifi/logs
+    - "{{ nifi_ssl_dir }}"
+
+- name: Copy custom keystore
+  copy:
+    src: "{{ playbook_dir }}/files/{{ nifi_keystore_file }}"
+    dest: "{{ nifi_keystore_path }}"
+    mode: '0600'
+  when: nifi_use_keycloak
+  notify: restart nifi
+
+- name: Copy custom truststore
+  copy:
+    src: "{{ playbook_dir }}/files/{{ nifi_truststore_file }}"
+    dest: "{{ nifi_truststore_path }}"
+    mode: '0600'
+  when: nifi_use_keycloak
+  notify: restart nifi
 
 - name: Configure nifi.properties
   template:
@@ -72,6 +89,10 @@
     -v /opt/nifi/conf/authorizers.xml:/opt/nifi/nifi-current/conf/authorizers.xml:ro
     -v /opt/nifi/data:/opt/nifi/nifi-current/data
     -v /opt/nifi/logs:/opt/nifi/nifi-current/logs
+    {% if nifi_use_keycloak %}
+    -v {{ nifi_keystore_path }}:{{ nifi_keystore_path }}:ro
+    -v {{ nifi_truststore_path }}:{{ nifi_truststore_path }}:ro
+    {% endif %}
     -e NIFI_CLUSTER_IS_NODE=true
     -e NIFI_CLUSTER_NODE_ADDRESS={{ ansible_host }}
     -e NIFI_ZK_CONNECT_STRING={{ nifi_zookeeper_connect_string }}
