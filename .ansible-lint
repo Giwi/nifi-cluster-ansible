@@ -1,0 +1,24 @@
+---
+# Ansible Lint configuration
+yaml:
+  file:
+    ignore: |
+      .github/
+      *.j2
+
+overrides:
+  # Custom rules
+  "208": skip  # Use fully qualified collection names (too verbose for small project)
+  "303": skip  # Use changed_when on command tasks (we handle this differently)
+
+rules:
+  # Enable/disable rules
+  "no-changed-while-used": disable
+  "deprecated-bare-vars": enable
+  
+# Ignore specific paths
+exclude_paths:
+  - .git/
+  - .vscode/
+  - files/
+  

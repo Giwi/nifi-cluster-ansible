@@ -2,6 +2,11 @@
 *.vault
 *.vault.yml
 group_vars/all/vault.yml
+.vault_pass
+
+# Ansible vault files
+*.vault
+*.vault.yml
 
 # Sensitive variables
 group_vars/*/vault.yml

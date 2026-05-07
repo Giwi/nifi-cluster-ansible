@@ -5,12 +5,26 @@
     state: directory
     mode: '0755'
 
+- name: Schedule ZooKeeper backup cron
+  cron:
+    name: "ZooKeeper backup"
+    minute: "0"
+    hour: "2"
+    job: "tar -czf /opt/backups/zookeeper/zookeeper-backup-$(date +\\%Y\\%m\\%d).tar.gz {{ zookeeper_data_dir }}"
+    state: present
+
+- name: Schedule old backup cleanup cron
+  cron:
+    name: "Clean old ZooKeeper backups"
+    minute: "30"
+    hour: "2"
+    job: "find /opt/backups/zookeeper -name '*.tar.gz' -mtime +7 -delete"
+    state: present
+
 - name: Backup ZooKeeper data
   archive:
     path: "{{ zookeeper_data_dir }}"
     dest: "/opt/backups/zookeeper/zookeeper-backup-{{ ansible_date_time.iso8601 }}.tar.gz"
     format: gz
-
-- name: Clean up old backups (keep last 7 days)
-  shell: find /opt/backups/zookeeper -name "*.tar.gz" -mtime +7 -delete
-  changed_when: false
+  when: run_backup | default(false)
+  tags: backup

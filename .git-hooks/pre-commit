@@ -1,0 +1,32 @@
+#!/bin/bash
+# Pre-commit hook for Ansible validation
+
+set -e
+
+echo "Running pre-commit checks..."
+
+# Check bash scripts syntax
+echo "Checking bash scripts..."
+for script in *.sh; do
+    if [ -f "$script" ]; then
+        bash -n "$script" || exit 1
+    fi
+done
+
+# Check YAML syntax for Ansible files
+echo "Checking YAML syntax..."
+if command -v yamllint &> /dev/null; then
+    yamllint . || exit 1
+else
+    echo "yamllint not installed, skipping YAML lint"
+fi
+
+# Run ansible-lint if available
+echo "Running ansible-lint..."
+if command -v ansible-lint &> /dev/null; then
+    ansible-lint || exit 1
+else
+    echo "ansible-lint not installed, skipping"
+fi
+
+echo "All pre-commit checks passed!"

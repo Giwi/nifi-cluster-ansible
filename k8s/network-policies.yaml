@@ -1,0 +1,120 @@
+# Kubernetes Network Policies
+
+## Network Policy for ZooKeeper
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: zookeeper-netpol
+spec:
+  podSelector:
+    matchLabels:
+      app: zookeeper
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: nifi
+    ports:
+    - protocol: TCP
+      port: 2181
+    - protocol: TCP
+      port: 2281
+  - from:
+    - podSelector:
+        matchLabels:
+          app: zookeeper
+    ports:
+    - protocol: TCP
+      port: 2888
+    - protocol: TCP
+      port: 3888
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: zookeeper
+    ports:
+    - protocol: TCP
+      port: 2888
+    - protocol: TCP
+      port: 3888
+  - to:
+    - podSelector:
+        matchLabels:
+          app: nifi
+    ports:
+    - protocol: TCP
+      port: 2181
+---
+# Network Policy for NiFi
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: nifi-netpol
+spec:
+  podSelector:
+    matchLabels:
+      app: nifi
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: haproxy
+    ports:
+    - protocol: TCP
+      port: 8443
+  - from:
+    - podSelector:
+        matchLabels:
+          app: nifi
+    ports:
+    - protocol: TCP
+      port: 8082
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: zookeeper
+    ports:
+    - protocol: TCP
+      port: 2181
+  - to:
+    - podSelector:
+        matchLabels:
+          app: nifi
+    ports:
+    - protocol: TCP
+      port: 8082
+---
+# Network Policy for HAProxy
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: haproxy-netpol
+spec:
+  podSelector:
+    matchLabels:
+      app: haproxy
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - ports:
+    - protocol: TCP
+      port: 8443
+    - protocol: TCP
+      port: 8404
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: nifi
+    ports:
+    - protocol: TCP
+      port: 8443

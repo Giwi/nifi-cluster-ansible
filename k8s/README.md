@@ -99,6 +99,22 @@ kubectl apply -f haproxy/configmap.yaml
 kubectl apply -f haproxy/deployment.yaml
 ```
 
+4. Apply Network Policies (recommended):
+```bash
+kubectl apply -f network-policies.yaml
+```
+
+2. Create HAProxy SSL certs (optional):
+```bash
+kubectl create secret generic haproxy-certs --from-file=nifi.pem
+```
+
+3. Deploy HAProxy:
+```bash
+kubectl apply -f haproxy/configmap.yaml
+kubectl apply -f haproxy/deployment.yaml
+```
+
 ## Notes
 
 - ZooKeeper uses a StatefulSet with 3 replicas
