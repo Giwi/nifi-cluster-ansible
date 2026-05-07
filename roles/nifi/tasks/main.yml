@@ -29,7 +29,7 @@
     from_ip: "{{ hostvars[item]['ansible_host'] }}"
   loop: "{{ groups['haproxy'] | default([]) }}"
 
-- name: Allow NiFi HTTP from HAProxy (when Keycloak disabled)
+- name: Allow NiFi HTTP from HAProxy
   ufw:
     rule: allow
     port: "{{ nifi_web_http_port }}"
@@ -59,7 +59,7 @@
   ufw:
     state: enabled
 
-- name: Check if SSL files exist (when Keycloak enabled)
+- name: Check if SSL files exist
   delegate_to: localhost
   stat:
     path: "{{ playbook_dir }}/files/{{ item }}"
@@ -68,7 +68,10 @@
     - "{{ nifi_truststore_file }}"
   register: ssl_files_check
   when: nifi_use_keycloak
-  failed_when: nifi_use_keycloak and (ssl_files_check.results | selectattr('stat.exists', 'equalto', false) | list | length > 0)
+  failed_when: >-
+    nifi_use_keycloak and
+    (ssl_files_check.results | selectattr('stat.exists',
+    'equalto', false) | list | length > 0)
 
 # Check if NiFi container exists
 - name: Check if NiFi container exists
@@ -129,32 +132,34 @@
   args:
     creates: /etc/cni/net.d/{{ nifi_docker_network }}.conflist
   register: network_result
-  failed_when: network_result.rc != 0 and "already exists" not in network_result.stderr
+  failed_when: >-
+    network_result.rc != 0 and
+    "already exists" not in network_result.stderr
 
 - name: Stop existing NiFi container if running
   command: podman stop nifi
   register: stop_result
-  failed_when: stop_result.rc != 0 and "no such container" not in stop_result.stderr
+  failed_when: >-
+    stop_result.rc != 0 and
+    "no such container" not in stop_result.stderr
   changed_when: stop_result.rc == 0
   when: nifi_container_exists.rc == 0
 
 - name: Remove existing NiFi container if exists
   command: podman rm nifi
   register: rm_result
-  failed_when: rm_result.rc != 0 and "no such container" not in rm_result.stderr
+  failed_when: >-
+    rm_result.rc != 0 and
+    "no such container" not in rm_result.stderr
   changed_when: rm_result.rc == 0
   when: nifi_container_exists.rc == 0
 
 - name: Deploy NiFi container
   command: >
-    podman run -d
-    --name nifi
+    podman run -d --name nifi
     --network {{ nifi_docker_network }}
-    {% if nifi_use_keycloak %}
     -p {{ nifi_web_https_port }}:8443
-    {% else %}
     -p {{ nifi_web_http_port }}:8080
-    {% endif %}
     -p {{ nifi_cluster_node_protocol_port }}:8082
     -v /opt/nifi/conf/nifi.properties:/opt/nifi/nifi-current/conf/nifi.properties:ro
     -v /opt/nifi/conf/login-identity-providers.xml:/opt/nifi/nifi-current/conf/login-identity-providers.xml:ro
@@ -167,11 +172,7 @@
     {% endif %}
     -e NIFI_CLUSTER_IS_NODE=true
     -e NIFI_CLUSTER_NODE_ADDRESS={{ ansible_host }}
-    {% if zookeeper_ssl_enabled is defined and zookeeper_ssl_enabled %}
-    -e NIFI_ZK_CONNECT_STRING={{ nifi_zookeeper_connect_string_ssl }}
-    {% else %}
     -e NIFI_ZK_CONNECT_STRING={{ nifi_zookeeper_connect_string }}
-    {% endif %}
     -e NIFI_SENSITIVE_PROPS_KEY={{ nifi_sensitive_props_key }}
     {% if nifi_use_keycloak %}
     -e NIFI_WEB_HTTPS_PORT={{ nifi_web_https_port }}
@@ -182,7 +183,7 @@
     --restart always
     --memory=4g
     --cpus=2.0
-    --health-cmd="curl -f http://localhost:8080/nifi || curl -f https://localhost:8443/nifi"
+    --health-cmd="curl -f http://localhost:8080/nifi || true"
     --health-interval=30s
     --health-timeout=15s
     --health-retries=3
@@ -208,3 +209,15 @@
     src: logrotate.j2
     dest: /etc/logrotate.d/nifi
     mode: '0644'
+
+- name: Check NiFi health
+  command: podman healthcheck run nifi
+  register: health_check
+  failed_when: false
+  changed_when: false
+
+# Backup tasks
+- name: Backup NiFi flows
+  include_tasks: backup.yml
+  when: nifi_backup_enabled | default(false)
+  tags: backup
