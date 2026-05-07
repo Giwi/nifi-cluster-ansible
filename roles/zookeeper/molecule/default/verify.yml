@@ -1,10 +1,12 @@
 ---
 - name: Verify ZooKeeper deployment
   hosts: all
-  become: yes
+  become: true
   tasks:
     - name: Check ZooKeeper container is running
-      command: podman ps --filter name=zookeeper --format "{{ '{{' }}.Names{{ '}}' }}"
+      command: >-
+        podman ps --filter name=zookeeper
+        --format "{{ '{{' }}.Names{{ '}}' }}"
       register: result
       failed_when: result.stdout != "zookeeper"
 
@@ -16,6 +18,7 @@
         timeout: 30
 
     - name: Check ZooKeeper quorum
-      shell: echo stat | nc localhost 2181 | grep -E "Mode: (leader|follower)"
+      shell: |
+        echo stat | nc localhost 2181 | grep -E "Mode: leader|Mode: follower"
       register: quorum_check
       failed_when: quorum_check.rc != 0

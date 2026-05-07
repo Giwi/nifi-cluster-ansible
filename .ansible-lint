@@ -1,21 +1,22 @@
 # Ansible Lint configuration
-yaml:
-  file:
-    ignore: |
-      .github/
-      *.j2
+skip_list:
+  # Use fully qualified collection names (too verbose for small project)
+  - fqcn
+  # Use changed_when on command tasks (we handle this differently)
+  - no-changed-when
+  # Allow long lines in templates
+  - line-length
+  # Enable yaml rule (uses yamllint)
+  - yaml
 
-overrides:
-  # Custom rules
-  "208": skip  # Use fully qualified collection names (too verbose for small project)
-  "303": skip  # Use changed_when on command tasks (we handle this differently)
+# Enable specific rules
+enable_list:
+  - no-log-password
+  - deprecated-bare-vars
 
-rules:
-  # Enable/disable rules
-  "no-changed-while-used": disable
-  "deprecated-bare-vars": enable
-  "line-length": skip  # Allow long lines in templates
-  "truthy": enable
+# Warnings (non-fatal)
+warn_list:
+  - truthy
 
 # Ignore specific paths
 exclude_paths:

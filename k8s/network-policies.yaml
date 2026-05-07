@@ -1,3 +1,4 @@
+---
 # Kubernetes Network Policies
 
 ## Network Policy for ZooKeeper
@@ -10,44 +11,45 @@ spec:
     matchLabels:
       app: zookeeper
   policyTypes:
-  - Ingress
-  - Egress
+    - Ingress
+    - Egress
   ingress:
-  - from:
-    - podSelector:
-        matchLabels:
-          app: nifi
-    ports:
-    - protocol: TCP
-      port: 2181
-    - protocol: TCP
-      port: 2281
-  - from:
-    - podSelector:
-        matchLabels:
-          app: zookeeper
-    ports:
-    - protocol: TCP
-      port: 2888
-    - protocol: TCP
-      port: 3888
+    - from:
+        - podSelector:
+            matchLabels:
+              app: nifi
+      ports:
+        - protocol: TCP
+          port: 2181
+        - protocol: TCP
+          port: 2281
+    - from:
+        - podSelector:
+            matchLabels:
+              app: zookeeper
+      ports:
+        - protocol: TCP
+          port: 2888
+        - protocol: TCP
+          port: 3888
   egress:
-  - to:
-    - podSelector:
-        matchLabels:
-          app: zookeeper
-    ports:
-    - protocol: TCP
-      port: 2888
-    - protocol: TCP
-      port: 3888
-  - to:
-    - podSelector:
-        matchLabels:
-          app: nifi
-    ports:
-    - protocol: TCP
-      port: 2181
+    - to:
+        - podSelector:
+            matchLabels:
+              app: zookeeper
+      ports:
+        - protocol: TCP
+          port: 2888
+        - protocol: TCP
+          port: 3888
+    - to:
+        - podSelector:
+            matchLabels:
+              app: nifi
+      ports:
+        - protocol: TCP
+          port: 2181
+
 ---
 # Network Policy for NiFi
 apiVersion: networking.k8s.io/v1
@@ -59,38 +61,39 @@ spec:
     matchLabels:
       app: nifi
   policyTypes:
-  - Ingress
-  - Egress
+    - Ingress
+    - Egress
   ingress:
-  - from:
-    - podSelector:
-        matchLabels:
-          app: haproxy
-    ports:
-    - protocol: TCP
-      port: 8443
-  - from:
-    - podSelector:
-        matchLabels:
-          app: nifi
-    ports:
-    - protocol: TCP
-      port: 8082
+    - from:
+        - podSelector:
+            matchLabels:
+              app: haproxy
+      ports:
+        - protocol: TCP
+          port: 8443
+    - from:
+        - podSelector:
+            matchLabels:
+              app: nifi
+      ports:
+        - protocol: TCP
+          port: 8082
   egress:
-  - to:
-    - podSelector:
-        matchLabels:
-          app: zookeeper
-    ports:
-    - protocol: TCP
-      port: 2181
-  - to:
-    - podSelector:
-        matchLabels:
-          app: nifi
-    ports:
-    - protocol: TCP
-      port: 8082
+    - to:
+        - podSelector:
+            matchLabels:
+              app: zookeeper
+      ports:
+        - protocol: TCP
+          port: 2181
+    - to:
+        - podSelector:
+            matchLabels:
+              app: nifi
+      ports:
+        - protocol: TCP
+          port: 8082
+
 ---
 # Network Policy for HAProxy
 apiVersion: networking.k8s.io/v1
@@ -102,19 +105,19 @@ spec:
     matchLabels:
       app: haproxy
   policyTypes:
-  - Ingress
-  - Egress
+    - Ingress
+    - Egress
   ingress:
-  - ports:
-    - protocol: TCP
-      port: 8443
-    - protocol: TCP
-      port: 8404
+    - ports:
+        - protocol: TCP
+          port: 8443
+        - protocol: TCP
+          port: 8404
   egress:
-  - to:
-    - podSelector:
-        matchLabels:
-          app: nifi
-    ports:
-    - protocol: TCP
-      port: 8443
+    - to:
+        - podSelector:
+            matchLabels:
+              app: nifi
+      ports:
+        - protocol: TCP
+          port: 8443

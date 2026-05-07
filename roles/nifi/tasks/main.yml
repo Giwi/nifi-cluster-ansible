@@ -7,13 +7,13 @@
       - ufw
       - logrotate
     state: present
-    update_cache: yes
+    update_cache: true
 
 - name: Set UFW default policy
   ufw:
     policy: deny
     direction: incoming
-    log: yes
+    log: true
 
 - name: Allow SSH
   ufw:
@@ -161,25 +161,26 @@
     -p {{ nifi_web_https_port }}:8443
     -p {{ nifi_web_http_port }}:8080
     -p {{ nifi_cluster_node_protocol_port }}:8082
-    -v /opt/nifi/conf/nifi.properties:/opt/nifi/nifi-current/conf/nifi.properties:ro
-    -v /opt/nifi/conf/login-identity-providers.xml:/opt/nifi/nifi-current/conf/login-identity-providers.xml:ro
-    -v /opt/nifi/conf/authorizers.xml:/opt/nifi/nifi-current/conf/authorizers.xml:ro
+    -v /opt/nifi/conf/nifi.properties:/opt/nifi/nifi-current/conf/
+      nifi.properties:ro
+    -v /opt/nifi/conf/login-identity-providers.xml:/opt/nifi/
+      nifi-current/conf/login-identity-providers.xml:ro
+    -v /opt/nifi/conf/authorizers.xml:/opt/nifi/nifi-current/conf/
+      authorizers.xml:ro
     -v /opt/nifi/data:/opt/nifi/nifi-current/data
     -v /opt/nifi/logs:/opt/nifi/nifi-current/logs
     {% if nifi_use_keycloak %}
     -v {{ nifi_keystore_path }}:{{ nifi_keystore_path }}:ro
     -v {{ nifi_truststore_path }}:{{ nifi_truststore_path }}:ro
-    {% endif %}
-    -e NIFI_CLUSTER_IS_NODE=true
-    -e NIFI_CLUSTER_NODE_ADDRESS={{ ansible_host }}
-    -e NIFI_ZK_CONNECT_STRING={{ nifi_zookeeper_connect_string }}
-    -e NIFI_SENSITIVE_PROPS_KEY={{ nifi_sensitive_props_key }}
-    {% if nifi_use_keycloak %}
-    -e NIFI_WEB_HTTPS_PORT={{ nifi_web_https_port }}
-    -e NIFI_SECURITY_USER_LOGIN_IDENTITY_PROVIDER=oidc-identity-provider
-    {% else %}
-    -e NIFI_WEB_HTTP_PORT={{ nifi_web_http_port }}
-    {% endif %}
+     {% endif %}
+     -e NIFI_CLUSTER_IS_NODE=true
+     -e NIFI_CLUSTER_NODE_ADDRESS={{ ansible_host }}
+     -e NIFI_ZK_CONNECT_STRING={{ nifi_zookeeper_connect_string }}
+     {% if nifi_use_keycloak %}
+     -e NIFI_WEB_HTTPS_PORT={{ nifi_web_https_port }}
+     {% else %}
+     -e NIFI_WEB_HTTP_PORT={{ nifi_web_http_port }}
+     {% endif %}
     --restart always
     --memory=4g
     --cpus=2.0
@@ -221,3 +222,9 @@
   include_tasks: backup.yml
   when: nifi_backup_enabled | default(false)
   tags: backup
+
+# Secret rotation
+- name: Setup secret rotation
+  include_tasks: secret-rotation.yml
+  when: nifi_use_keycloak
+  tags: security

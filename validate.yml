@@ -1,39 +1,39 @@
 ---
-- name: Validate ZooKeeper Cluster;
-  hosts: zookeeper;
-  become: yes;
+- name: Validate ZooKeeper Cluster
+  hosts: zookeeper
+  become: true
   tasks:
-    - name: Check ZooKeeper service status;
-      shell: podman ps --filter name=zookeeper;
-      register: zk_status;
+    - name: Check ZooKeeper service status
+      shell: podman ps --filter name=zookeeper
+      register: zk_status
       failed_when: "'Up' not in zk_status.stdout"
 
-    - name: Check ZooKeeper quorum;
-      shell: echo stat | nc localhost 2181 | grep leader;
-      register: quorum_check;
-      failed_when: quorum_check.rc != 0;
+    - name: Check ZooKeeper quorum
+      shell: echo stat | nc localhost 2181 | grep leader
+      register: quorum_check
+      failed_when: quorum_check.rc != 0
 
-- name: Validate NiFi Cluster;
-  hosts: nifi;
-  become: yes;
+- name: Validate NiFi Cluster
+  hosts: nifi
+  become: true
   tasks:
-    - name: Check NiFi service status;
-      shell: podman ps --filter name=nifi;
-      register: nifi_status;
+    - name: Check NiFi service status
+      shell: podman ps --filter name=nifi
+      register: nifi_status
       failed_when: "'Up' not in nifi_status.stdout"
 
-- name: Validate HAProxy;
-  hosts: haproxy;
-  become: yes;
+- name: Validate HAProxy
+  hosts: haproxy
+  become: true
   tasks:
-    - name: Check HAProxy service status;
-      shell: podman ps --filter name=haproxy;
-      register: haproxy_status;
+    - name: Check HAProxy service status
+      shell: podman ps --filter name=haproxy
+      register: haproxy_status
       failed_when: "'Up' not in haproxy_status.stdout"
 
-    - name: Check HAProxy stats page;
+    - name: Check HAProxy stats page
       uri:
-        url: http://localhost:8404/stats;
-        user: "{{ haproxy_stats_user }}";
-        password: "{{ vault_haproxy_stats_password }}";
-        status_code: 200;
+        url: http://localhost:8404/stats
+        user: "{{ haproxy_stats_user }}"
+        password: "{{ vault_haproxy_stats_password }}"
+        status_code: 200

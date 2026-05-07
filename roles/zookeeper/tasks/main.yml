@@ -6,13 +6,13 @@
       - podman-docker
       - ufw
     state: present
-    update_cache: yes
+    update_cache: true
 
 - name: Set UFW default policy
   ufw:
     policy: deny
     direction: incoming
-    log: yes
+    log: true
 
 - name: Allow SSH
   ufw:
@@ -68,12 +68,15 @@
     - "{{ zookeeper_truststore_file }}"
   register: ssl_files_check
   when: zookeeper_ssl_enabled
-  failed_when: zookeeper_ssl_enabled and (ssl_files_check.results | selectattr('stat.exists', 'equalto', false) | list | length > 0)
+  failed_when: >-
+    zookeeper_ssl_enabled and
+    (ssl_files_check.results | selectattr('stat.exists', 'equalto', false) |
+    list | length > 0)
 
 - name: Create zookeeper user
   user:
     name: zookeeper
-    system: yes
+    system: true
     shell: /bin/bash
 
 - name: Create data directory
@@ -112,7 +115,9 @@
   args:
     creates: /etc/cni/net.d/{{ zookeeper_docker_network }}.conflist
   register: network_result
-  failed_when: network_result.rc != 0 and "already exists" not in network_result.stderr
+  failed_when: >-
+    network_result.rc != 0 and
+    "already exists" not in network_result.stderr
 
 - name: Check if ZooKeeper container exists
   command: podman inspect zookeeper
@@ -122,16 +127,24 @@
 
 - name: Get ZooKeeper server ID
   set_fact:
-    zk_server_id: "{{ zookeeper_servers | selectattr('host', 'equalto', ansible_host) | map(attribute='id') | first }}"
+    zk_server_id: >-
+      {{ zookeeper_servers |
+      selectattr('host', 'equalto', ansible_host) |
+      map(attribute='id') | first }}
 
 - name: Build ZooKeeper servers string
   set_fact:
-    zk_servers_string: "{% for server in zookeeper_servers %}server.{{ server.id }}={{ server.host }}:2888:3888 {% endfor %}"
+    zk_servers_string: >-
+      {% for server in zookeeper_servers %}
+      server.{{ server.id }}={{ server.host }}:2888:3888
+      {% endfor %}
 
 - name: Stop existing ZooKeeper container if running
   command: podman stop zookeeper
   register: stop_result
-  failed_when: stop_result.rc != 0 and "no such container" not in stop_result.stderr
+  failed_when: >-
+    stop_result.rc != 0 and
+    "no such container" not in stop_result.stderr
   changed_when: stop_result.rc == 0
   when: zk_container_exists.rc == 0
 

@@ -5,13 +5,13 @@
       - podman
       - ufw
     state: present
-    update_cache: yes
+    update_cache: true
 
 - name: Set UFW default policy
   ufw:
     policy: deny
     direction: incoming
-    log: yes
+    log: true
 
 - name: Allow SSH
   ufw:
@@ -75,7 +75,9 @@
 - name: Stop existing HAProxy container if running
   command: podman stop haproxy
   register: stop_result
-  failed_when: stop_result.rc != 0 and "no such container" not in stop_result.stderr
+  failed_when: >-
+    stop_result.rc != 0 and
+    "no such container" not in stop_result.stderr
   changed_when: stop_result.rc == 0
   when: haproxy_container_exists.rc == 0
 

@@ -1,10 +1,12 @@
 ---
 - name: Verify NiFi deployment
   hosts: all
-  become: yes
+  become: true
   tasks:
     - name: Check NiFi container is running
-      command: podman ps --filter name=nifi --format "{{ '{{' }}.Names{{ '}}' }}"
+      command: >-
+        podman ps --filter name=nifi
+        --format "{{ '{{' }}.Names{{ '}}' }}"
       register: result
       failed_when: result.stdout != "nifi"
 
@@ -16,7 +18,9 @@
         timeout: 120
 
     - name: Check NiFi connects to ZooKeeper
-      shell: podman exec nifi bash -c "echo stat | nc {{ hostvars['zk1']['ansible_host'] }} 2181"
+      shell: >-
+        podman exec nifi bash -c
+        "echo stat | nc {{ hostvars['zk1']['ansible_host'] }} 2181"
       register: zk_check
       failed_when: zk_check.rc != 0
       delegate_to: zk1

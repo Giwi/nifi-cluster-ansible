@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -18,134 +19,107 @@ spec:
         runAsUser: 1000
         fsGroup: 1000
       containers:
-      - name: nifi
-        image: apache/nifi:2.9.0
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-              - ALL
+        - name: nifi
+          image: apache/nifi:2.9.0
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              memory: "2Gi"
+              cpu: "1"
+            limits:
+              memory: "4Gi"
+              cpu: "2"
+          ports:
+            - containerPort: 8443
+              name: https
+            - containerPort: 8082
+              name: cluster
+          env:
+            - name: NIFI_CLUSTER_IS_NODE
+              value: "true"
+            - name: NIFI_CLUSTER_NODE_ADDRESS
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: NIFI_ZK_CONNECT_STRING
+              value: "zookeeper-client:2181"
+            - name: NIFI_WEB_HTTPS_PORT
+              value: "8443"
+            - name: NIFI_WEB_HTTP_PORT
+              value: ""
+            - name: NIFI_SENSITIVE_PROPS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: nifi-secrets
+                  key: sensitive-props-key
+            - name: KEYCLOAK_URL
+              valueFrom:
+                secretKeyRef:
+                  name: nifi-secrets
+                  key: keycloak-url
+            - name: KEYCLOAK_REALM
+              valueFrom:
+                secretKeyRef:
+                  name: nifi-secrets
+                  key: keycloak-realm
+            - name: KEYCLOAK_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: nifi-secrets
+                  key: keycloak-client-id
+            - name: KEYCLOAK_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: nifi-secrets
+                  key: keycloak-client-secret
+          volumeMounts:
+            - name: data
+              mountPath: /opt/nifi/nifi-current/data
+            - name: ssl
+              mountPath: /opt/nifi/ssl
+              readOnly: true
+            - name: config
+              mountPath: /opt/nifi/nifi-current/conf/
+                login-identity-providers.xml
+              subPath: login-identity-providers.xml
+            - name: config
+              mountPath: /opt/nifi/nifi-current/conf/
+                authorizers.xml
+              subPath: authorizers.xml
+          livenessProbe:
+            httpGet:
+              path: /nifi
+              port: 8443
+              scheme: HTTPS
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /nifi
+              port: 8443
+              scheme: HTTPS
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+      volumes:
+        - name: ssl
+          secret:
+            secretName: nifi-ssl
+        - name: config
+          configMap:
+            name: nifi-config
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
         resources:
           requests:
-            memory: "2Gi"
-            cpu: "1"
-          limits:
-            memory: "4Gi"
-            cpu: "2"
-        ports:
-        - containerPort: 8443
-          name: https
-        - containerPort: 8082
-          name: cluster
-        env:
-        - name: NIFI_CLUSTER_IS_NODE
-          value: "true"
-        - name: NIFI_CLUSTER_NODE_ADDRESS
-          valueFrom:
-            fieldRef:
-              fieldPath: status.podIP
-        - name: NIFI_ZK_CONNECT_STRING
-          value: "zookeeper-client:2181"
-        - name: NIFI_WEB_HTTPS_PORT
-          value: "8443"
-        - name: NIFI_WEB_HTTP_PORT
-          value: ""
-        - name: NIFI_SENSITIVE_PROPS_KEY
-          valueFrom:
-            secretKeyRef:
-              name: nifi-secrets
-              key: sensitive-props-key
-        - name: KEYCLOAK_URL
-          valueFrom:
-            secretKeyRef:
-              name: nifi-secrets
-              key: keycloak-url
-        - name: KEYCLOAK_REALM
-          valueFrom:
-            secretKeyRef:
-              name: nifi-secrets
-              key: keycloak-realm
-        - name: KEYCLOAK_CLIENT_ID
-          valueFrom:
-            secretKeyRef:
-              name: nifi-secrets
-              key: keycloak-client-id
-        - name: KEYCLOAK_CLIENT_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: nifi-secrets
-              key: keycloak-client-secret
-        volumeMounts:
-        - name: data
-          mountPath: /opt/nifi/nifi-current/data
-        - name: ssl
-          mountPath: /opt/nifi/ssl
-          readOnly: true
-        - name: config
-          mountPath: /opt/nifi/nifi-current/conf/login-identity-providers.xml
-          subPath: login-identity-providers.xml
-        - name: config
-          mountPath: /opt/nifi/nifi-current/conf/authorizers.xml
-          subPath: authorizers.xml
-        livenessProbe:
-          httpGet:
-            path: /nifi
-            port: 8443
-            scheme: HTTPS
-          initialDelaySeconds: 60
-          periodSeconds: 30
-          timeoutSeconds: 10
-          failureThreshold: 3
-        readinessProbe:
-          httpGet:
-            path: /nifi
-            port: 8443
-            scheme: HTTPS
-          initialDelaySeconds: 30
-          periodSeconds: 15
-          timeoutSeconds: 5
-          failureThreshold: 3
-      volumes:
-      - name: ssl
-        secret:
-          secretName: nifi-ssl
-      - name: config
-        configMap:
-          name: nifi-config
-  volumeClaimTemplates:
-  - metadata:
-      name: data
-    spec:
-      accessModes: ["ReadWriteOnce"]
-      resources:
-        requests:
-          storage: 10Gi
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: nifi-headless
-spec:
-  clusterIP: None
-  selector:
-    app: nifi
-  ports:
-  - name: https
-    port: 8443
-    targetPort: 8443
-  - name: cluster
-    port: 8082
-    targetPort: 8082
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: nifi-external
-spec:
-  selector:
-    app: nifi
-  ports:
-  - name: https
-    port: 8443
-    targetPort: 8443
-  type: ClusterIP
+            storage: 10Gi

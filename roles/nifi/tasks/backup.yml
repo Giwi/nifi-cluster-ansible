@@ -10,7 +10,10 @@
     name: "NiFi backup"
     minute: "0"
     hour: "3"
-    job: "tar -czf /opt/backups/nifi/nifi-backup-$(date +\\%Y\\%m\\%d).tar.gz /opt/nifi/data"
+    job: >-
+      tar -czf
+      /opt/backups/nifi/nifi-backup-$(date +\\%Y\\%m\\%d).tar.gz
+      /opt/nifi/data
     state: present
 
 - name: Schedule old backup cleanup cron
@@ -24,7 +27,9 @@
 - name: Backup NiFi flows
   archive:
     path: /opt/nifi/data
-    dest: "/opt/backups/nifi/nifi-flows-backup-{{ ansible_date_time.iso8601 }}.tar.gz"
+    dest: >-
+      /opt/backups/nifi/nifi-flows-backup-
+      {{ ansible_date_time.iso8601 }}.tar.gz
     format: gz
   when: run_backup | default(false)
   tags: backup

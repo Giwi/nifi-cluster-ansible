@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -18,116 +19,82 @@ spec:
         runAsUser: 1000
         fsGroup: 1000
       containers:
-      - name: zookeeper
-        image: bitnami/zookeeper:3.9.5
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-              - ALL
-        resources:
-          requests:
-            memory: "512Mi"
-            cpu: "500m"
-          limits:
-            memory: "1Gi"
-            cpu: "1"
-        ports:
-        - containerPort: 2181
-          name: client
-        - containerPort: 2888
-          name: leader
-        - containerPort: 3888
-          name: election
-        env:
-        - name: ALLOW_ANONYMOUS_LOGIN
-          value: "no"
-        - name: ZOO_SERVER_ID
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
-        - name: ZOO_TLS_CLIENT_ENABLED
-          value: "true"
-        - name: ZOO_TLS_KEYSTORE_FILE
-          value: "/opt/zookeeper-ssl/keystore.jks"
-        - name: ZOO_TLS_TRUSTSTORE_FILE
-          value: "/opt/zookeeper-ssl/truststore.jks"
-        - name: ZOO_TLS_KEYSTORE_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: zookeeper-ssl
-              key: keystore-password
-        - name: ZOO_TLS_TRUSTSTORE_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: zookeeper-ssl
-              key: truststore-password
-        command: ["/bin/bash", "-c"]
-        args:
-          - |
-            ORDINAL=$(hostname | awk -F'-' '{print $NF}')
-            export ZOO_SERVER_ID=$((ORDINAL + 1))
-            export ZOO_SERVERS="server.1=zookeeper-0.zookeeper-headless:2888:3888 server.2=zookeeper-1.zookeeper-headless:2888:3888 server.3=zookeeper-2.zookeeper-headless:2888:3888"
-            exec /entrypoint.sh /run.sh
-        volumeMounts:
-        - name: ssl
-          mountPath: /opt/zookeeper-ssl
-          readOnly: true
-        - name: data
-          mountPath: /bitnami/zookeeper
-        livenessProbe:
-          tcpSocket:
-            port: 2181
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 5
-        readinessProbe:
-          tcpSocket:
-            port: 2181
-          initialDelaySeconds: 10
-          periodSeconds: 5
-          timeoutSeconds: 3
+        - name: zookeeper
+          image: bitnami/zookeeper:3.9.5
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1"
+          ports:
+            - containerPort: 2181
+              name: client
+            - containerPort: 2888
+              name: leader
+            - containerPort: 3888
+              name: election
+          env:
+            - name: ALLOW_ANONYMOUS_LOGIN
+              value: "no"
+            - name: ZOO_SERVER_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: ZOO_TLS_CLIENT_ENABLED
+              value: "true"
+            - name: ZOO_TLS_KEYSTORE_FILE
+              value: "/opt/zookeeper-ssl/keystore.jks"
+            - name: ZOO_TLS_TRUSTSTORE_FILE
+              value: "/opt/zookeeper-ssl/truststore.jks"
+            - name: ZOO_TLS_KEYSTORE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: zookeeper-ssl
+                  key: keystore-password
+            - name: ZOO_TLS_TRUSTSTORE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: zookeeper-ssl
+                  key: truststore-password
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              O=$(hostname | awk -F'-' '{print $NF}')
+              export ZOO_SERVER_ID=$((O + 1))
+              S=""
+              S="${S}server.1=zookeeper-0.zookeeper-headless:2888:3888 "
+              S="${S}server.2=zookeeper-1.zookeeper-headless:2888:3888 "
+              S="${S}server.3=zookeeper-2.zookeeper-headless:2888:3888"
+              export ZOO_SERVERS="${S}"
+              exec /entrypoint.sh /run.sh
+          volumeMounts:
+            - name: ssl
+              mountPath: /opt/zookeeper-ssl
+              readOnly: true
+            - name: data
+              mountPath: /bitnami/zookeeper
+          livenessProbe:
+            tcpSocket:
+              port: 2181
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            tcpSocket:
+              port: 2181
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
       volumes:
-      - name: ssl
-        secret:
-          secretName: zookeeper-ssl
-      - name: data
-        emptyDir: {}
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: zookeeper-headless
-spec:
-  clusterIP: None
-  selector:
-    app: zookeeper
-  ports:
-  - name: client
-    port: 2181
-    targetPort: 2181
-  - name: client-ssl
-    port: 2281
-    targetPort: 2281
-  - name: leader
-    port: 2888
-    targetPort: 2888
-  - name: election
-    port: 3888
-    targetPort: 3888
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: zookeeper-client
-spec:
-  selector:
-    app: zookeeper
-  ports:
-  - name: client
-    port: 2181
-    targetPort: 2181
-  - name: client-ssl
-    port: 2281
-    targetPort: 2281
-  type: ClusterIP
+        - name: ssl
+          secret:
+            secretName: zookeeper-ssl
+        - name: data
+          emptyDir: {}

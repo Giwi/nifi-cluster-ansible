@@ -1,7 +1,7 @@
 ---
 - name: Cleanup ZooKeeper Cluster
   hosts: zookeeper
-  become: yes
+  become: true
   tasks:
     - name: Stop and remove ZooKeeper container
       command: "{{ item }}"
@@ -20,7 +20,7 @@
 
 - name: Cleanup NiFi Cluster
   hosts: nifi
-  become: yes
+  become: true
   tasks:
     - name: Stop and remove NiFi container
       command: "{{ item }}"
@@ -39,7 +39,7 @@
 
 - name: Cleanup HAProxy
   hosts: haproxy
-  become: yes
+  become: true
   tasks:
     - name: Stop and remove HAProxy container
       command: "{{ item }}"
