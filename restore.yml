@@ -1,0 +1,58 @@
+---
+- name: Restore ZooKeeper from backup
+  hosts: zookeeper
+  become: yes
+  vars:
+    backup_file: "{{ restore_file | default('') }}"
+  tasks:
+    - name: Fail if backup file not specified
+      fail:
+        msg: "Specify backup file with: -e restore_file=/opt/backups/zookeeper/zookeeper-backup-2024-05-07T12:00:00Z.tar.gz"
+      when: backup_file == ""
+
+    - name: Stop ZooKeeper container
+      command: podman stop zookeeper
+      register: stop_result
+      failed_when: stop_result.rc != 0 and "no such container" not in stop_result.stderr
+
+    - name: Extract backup to data directory
+      unarchive:
+        src: "{{ backup_file }}"
+        dest: "{{ zookeeper_data_dir }}"
+        remote_src: yes
+        owner: zookeeper
+        group: zookeeper
+
+    - name: Start ZooKeeper container
+      command: podman start zookeeper
+      register: start_result
+      failed_when: start_result.rc != 0
+
+- name: Restore NiFi from backup
+  hosts: nifi
+  become: yes
+  vars:
+    backup_file: "{{ restore_file | default('') }}"
+  tasks:
+    - name: Fail if backup file not specified
+      fail:
+        msg: "Specify backup file with: -e restore_file=/opt/backups/nifi/nifi-backup-2024-05-07T12:00:00Z.tar.gz"
+      when: backup_file == ""
+
+    - name: Stop NiFi container
+      command: podman stop nifi
+      register: stop_result
+      failed_when: stop_result.rc != 0 and "no such container" not in stop_result.stderr
+
+    - name: Extract backup to data directory
+      unarchive:
+        src: "{{ backup_file }}"
+        dest: /opt/nifi/data
+        remote_src: yes
+        owner: root
+        group: root
+
+    - name: Start NiFi container
+      command: podman start nifi
+      register: start_result
+      failed_when: start_result.rc != 0

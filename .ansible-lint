@@ -1,4 +1,3 @@
----
 # Ansible Lint configuration
 yaml:
   file:
@@ -15,10 +14,11 @@ rules:
   # Enable/disable rules
   "no-changed-while-used": disable
   "deprecated-bare-vars": enable
-  
+  "line-length": skip  # Allow long lines in templates
+  "truthy": enable
+
 # Ignore specific paths
 exclude_paths:
   - .git/
   - .vscode/
   - files/
-  

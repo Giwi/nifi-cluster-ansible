@@ -2,9 +2,13 @@
 collections:
   - name: community.general
   - name: ansible.posix
+  - name: community.podman
 
 roles: {}
 
-# Additional requirements for testing
-# - name: ansible-lint
-#   version: "6.0"
+# Testing requirements
+collections:
+  - name: molecule
+    version: "5.0"
+  - name: molecule-podman
+    version: "1.0"

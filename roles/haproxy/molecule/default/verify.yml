@@ -1,0 +1,23 @@
+---
+- name: Verify HAProxy deployment
+  hosts: all
+  become: yes
+  tasks:
+    - name: Check HAProxy container is running
+      command: podman ps --filter name=haproxy --format "{{ '{{' }}.Names{{ '}}' }}"
+      register: result
+      failed_when: result.stdout != "haproxy"
+
+    - name: Check HAProxy frontend port
+      wait_for:
+        host: localhost
+        port: 8443
+        delay: 5
+        timeout: 30
+
+    - name: Check HAProxy stats with auth
+      uri:
+        url: http://localhost:8404/stats
+        user: admin
+        password: "{{ vault_haproxy_stats_password }}"
+        status_code: 200
