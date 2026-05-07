@@ -1,11 +1,63 @@
 ---
-- name: Install Podman
+- name: Install Podman and UFW
   apt:
     name:
       - podman
       - podman-docker
+      - ufw
     state: present
     update_cache: yes
+
+- name: Set UFW default policy
+  ufw:
+    policy: deny
+    direction: incoming
+    log: yes
+
+- name: Allow SSH
+  ufw:
+    rule: allow
+    port: "22"
+    proto: tcp
+
+- name: Allow ZooKeeper client port from NiFi nodes
+  ufw:
+    rule: allow
+    port: "{{ zookeeper_client_port }}"
+    proto: tcp
+    from_ip: "{{ hostvars[item]['ansible_host'] }}"
+  loop: "{{ groups['nifi'] | default([]) }}"
+
+- name: Allow ZooKeeper leader port from ZooKeeper nodes
+  ufw:
+    rule: allow
+    port: "{{ zookeeper_leader_port }}"
+    proto: tcp
+    from_ip: "{{ hostvars[item]['ansible_host'] }}"
+  loop: "{{ groups['zookeeper'] | default([]) }}"
+  when: item != inventory_hostname
+
+- name: Allow ZooKeeper election port from ZooKeeper nodes
+  ufw:
+    rule: allow
+    port: "{{ zookeeper_election_port }}"
+    proto: tcp
+    from_ip: "{{ hostvars[item]['ansible_host'] }}"
+  loop: "{{ groups['zookeeper'] | default([]) }}"
+  when: item != inventory_hostname
+
+- name: Allow ZooKeeper SSL client port from NiFi nodes
+  ufw:
+    rule: allow
+    port: "{{ zookeeper_client_ssl_port }}"
+    proto: tcp
+    from_ip: "{{ hostvars[item]['ansible_host'] }}"
+  loop: "{{ groups['nifi'] | default([]) }}"
+  when: zookeeper_ssl_enabled | default(false)
+
+- name: Enable UFW
+  ufw:
+    state: enabled
 
 - name: Check if SSL files exist (when SSL enabled)
   delegate_to: localhost
@@ -62,6 +114,12 @@
   register: network_result
   failed_when: network_result.rc != 0 and "already exists" not in network_result.stderr
 
+- name: Check if ZooKeeper container exists
+  command: podman inspect zookeeper
+  register: zk_container_exists
+  failed_when: false
+  changed_when: false
+
 - name: Get ZooKeeper server ID
   set_fact:
     zk_server_id: "{{ zookeeper_servers | selectattr('host', 'equalto', ansible_host) | map(attribute='id') | first }}"
@@ -75,12 +133,14 @@
   register: stop_result
   failed_when: stop_result.rc != 0 and "no such container" not in stop_result.stderr
   changed_when: stop_result.rc == 0
+  when: zk_container_exists.rc == 0
 
 - name: Remove existing ZooKeeper container if exists
   command: podman rm zookeeper
   register: rm_result
   failed_when: rm_result.rc != 0 and "no such container" not in rm_result.stderr
   changed_when: rm_result.rc == 0
+  when: zk_container_exists.rc == 0
 
 - name: Deploy ZooKeeper container
   command: >
@@ -100,7 +160,7 @@
     {% endif %}
     -e ZOO_SERVER_ID={{ zk_server_id }}
     -e ZOO_SERVERS={{ zk_servers_string }}
-    -e ALLOW_ANONYMOUS_LOGIN=yes
+    -e ALLOW_ANONYMOUS_LOGIN=no
     {% if zookeeper_ssl_enabled %}
     -e ZOO_TLS_CLIENT_ENABLED=true
     -e ZOO_TLS_KEYSTORE_FILE={{ zookeeper_keystore_path }}
@@ -109,9 +169,16 @@
     -e ZOO_TLS_TRUSTSTORE_PASSWORD={{ zookeeper_truststore_password }}
     {% endif %}
     --restart always
+    --memory=1g
+    --cpus=1.0
+    --health-cmd="echo stat | nc localhost 2181"
+    --health-interval=30s
+    --health-timeout=10s
+    --health-retries=3
     bitnami/zookeeper:{{ zookeeper_version }}
   register: podman_run
   changed_when: podman_run.rc == 0
+  when: not zk_container_exists.stat.exists or zk_config_changed
 
 - name: Wait for ZooKeeper to start
   wait_for:
@@ -119,6 +186,12 @@
     port: "{{ zookeeper_client_port }}"
     delay: 10
     timeout: 60
+
+- name: Check ZooKeeper health
+  command: podman healthcheck run zookeeper
+  register: health_check
+  failed_when: false
+  changed_when: false
 
 - name: Install logrotate
   apt:

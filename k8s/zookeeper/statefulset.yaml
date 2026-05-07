@@ -13,9 +13,25 @@ spec:
       labels:
         app: zookeeper
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
       containers:
       - name: zookeeper
         image: bitnami/zookeeper:3.9.5
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1"
         ports:
         - containerPort: 2181
           name: client
@@ -25,7 +41,7 @@ spec:
           name: election
         env:
         - name: ALLOW_ANONYMOUS_LOGIN
-          value: "yes"
+          value: "no"
         - name: ZOO_SERVER_ID
           valueFrom:
             fieldRef:
@@ -54,11 +70,23 @@ spec:
             export ZOO_SERVERS="server.1=zookeeper-0.zookeeper-headless:2888:3888 server.2=zookeeper-1.zookeeper-headless:2888:3888 server.3=zookeeper-2.zookeeper-headless:2888:3888"
             exec /entrypoint.sh /run.sh
         volumeMounts:
-        - name: data
-          mountPath: /bitnami/zookeeper
         - name: ssl
           mountPath: /opt/zookeeper-ssl
           readOnly: true
+        - name: data
+          mountPath: /bitnami/zookeeper
+        livenessProbe:
+          tcpSocket:
+            port: 2181
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          tcpSocket:
+            port: 2181
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
       volumes:
       - name: ssl
         secret:

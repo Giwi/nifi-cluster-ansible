@@ -6,6 +6,7 @@
     - group_vars/all/vault.yml
   roles:
     - zookeeper
+  tags: zookeeper
 
 - name: Deploy NiFi Cluster
   hosts: nifi
@@ -14,6 +15,7 @@
     - group_vars/all/vault.yml
   roles:
     - nifi
+  tags: nifi
 
 - name: Deploy HAProxy Load Balancer
   hosts: haproxy
@@ -22,9 +24,4 @@
     - group_vars/all/vault.yml
   roles:
     - haproxy
-
-- name: Configure Firewall Rules
-  hosts: all
-  become: yes
-  roles:
-    - common
+  tags: haproxy

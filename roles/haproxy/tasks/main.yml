@@ -1,10 +1,48 @@
 ---
-- name: Install Podman
+- name: Install Podman and UFW
   apt:
     name:
       - podman
+      - ufw
     state: present
     update_cache: yes
+
+- name: Set UFW default policy
+  ufw:
+    policy: deny
+    direction: incoming
+    log: yes
+
+- name: Allow SSH
+  ufw:
+    rule: allow
+    port: "22"
+    proto: tcp
+
+- name: Allow HAProxy frontend from admin network
+  ufw:
+    rule: allow
+    port: "{{ haproxy_frontend_port }}"
+    proto: tcp
+    from_ip: "{{ admin_network | default('any') }}"
+
+- name: Allow HAProxy stats from admin network
+  ufw:
+    rule: allow
+    port: "{{ haproxy_stats_port }}"
+    proto: tcp
+    from_ip: "{{ admin_network | default('127.0.0.1') }}"
+
+- name: Enable UFW
+  ufw:
+    state: enabled
+
+# Check if HAProxy container exists
+- name: Check if HAProxy container exists
+  command: podman inspect haproxy
+  register: haproxy_container_exists
+  failed_when: false
+  changed_when: false
 
 - name: Create HAProxy configuration directory
   file:
@@ -39,12 +77,14 @@
   register: stop_result
   failed_when: stop_result.rc != 0 and "no such container" not in stop_result.stderr
   changed_when: stop_result.rc == 0
+  when: haproxy_container_exists.rc == 0
 
 - name: Remove existing HAProxy container if exists
   command: podman rm haproxy
   register: rm_result
   failed_when: rm_result.rc != 0 and "no such container" not in rm_result.stderr
   changed_when: rm_result.rc == 0
+  when: haproxy_container_exists.rc == 0
 
 - name: Deploy HAProxy container
   command: >
@@ -57,9 +97,12 @@
     -v /etc/haproxy/certs:/etc/haproxy/certs:ro
     {% endif %}
     --restart always
+    --memory=512m
+    --cpus=0.5
     haproxy:2.8
   register: podman_run
   changed_when: podman_run.rc == 0
+  when: not haproxy_container_exists.stat.exists or haproxy_config_changed
 
 - name: Wait for HAProxy to start
   wait_for:

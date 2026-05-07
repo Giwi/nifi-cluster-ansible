@@ -13,9 +13,25 @@ spec:
       labels:
         app: nifi
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
       containers:
       - name: nifi
         image: apache/nifi:2.9.0
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1"
+          limits:
+            memory: "4Gi"
+            cpu: "2"
         ports:
         - containerPort: 8443
           name: https
@@ -71,6 +87,24 @@ spec:
         - name: config
           mountPath: /opt/nifi/nifi-current/conf/authorizers.xml
           subPath: authorizers.xml
+        livenessProbe:
+          httpGet:
+            path: /nifi
+            port: 8443
+            scheme: HTTPS
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /nifi
+            port: 8443
+            scheme: HTTPS
+          initialDelaySeconds: 30
+          periodSeconds: 15
+          timeoutSeconds: 5
+          failureThreshold: 3
       volumes:
       - name: ssl
         secret:
@@ -102,8 +136,6 @@ spec:
   - name: cluster
     port: 8082
     targetPort: 8082
-# Note: External access is now handled by HAProxy
-# This service is for internal cluster access only
 ---
 apiVersion: v1
 kind: Service

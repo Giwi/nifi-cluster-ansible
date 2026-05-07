@@ -1,0 +1,16 @@
+---
+- name: Create backup directory
+  file:
+    path: /opt/backups/nifi
+    state: directory
+    mode: '0755'
+
+- name: Backup NiFi flows
+  archive:
+    path: /opt/nifi/data
+    dest: "/opt/backups/nifi/nifi-flows-backup-{{ ansible_date_time.iso8601 }}.tar.gz"
+    format: gz
+
+- name: Clean up old backups (keep last 7 days)
+  shell: find /opt/backups/nifi -name "*.tar.gz" -mtime +7 -delete
+  changed_when: false

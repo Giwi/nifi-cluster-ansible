@@ -1,0 +1,16 @@
+---
+- name: Create backup directory
+  file:
+    path: /opt/backups/zookeeper
+    state: directory
+    mode: '0755'
+
+- name: Backup ZooKeeper data
+  archive:
+    path: "{{ zookeeper_data_dir }}"
+    dest: "/opt/backups/zookeeper/zookeeper-backup-{{ ansible_date_time.iso8601 }}.tar.gz"
+    format: gz
+
+- name: Clean up old backups (keep last 7 days)
+  shell: find /opt/backups/zookeeper -name "*.tar.gz" -mtime +7 -delete
+  changed_when: false
