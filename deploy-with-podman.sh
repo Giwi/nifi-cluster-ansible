@@ -15,7 +15,7 @@ ANSIBLE_IMAGE="ansible/ansible:2.16"
 
 # Check if vault password file exists
 VAULT_PASS_FILE=".vault_pass"
-if [ ! -f "$VAULT_PASS_FILE" ]; then
+if [ ! -f "$VAULT_PASS_FILE" ]; then; then
     echo "Warning: Vault password file '$VAULT_PASS_FILE' not found."
     echo "Create it with: echo 'your-password' > $VAULT_PASS_FILE"
     echo "Or run with: $0 --vault-password-file=/path/to/passfile"
