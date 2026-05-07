@@ -1,0 +1,23 @@
+/var/lib/containers/storage/overlay-containers/*/userdata/ctr.log {
+    daily
+    rotate 7
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0644 root root
+    sharedscripts
+    postrotate
+        podman restart haproxy > /dev/null 2>&1 || true
+    endscript
+}
+
+/var/log/haproxy/*.log {
+    daily
+    rotate 7
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0644 haproxy haproxy
+}

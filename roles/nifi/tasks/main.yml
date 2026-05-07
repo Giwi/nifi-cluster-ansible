@@ -7,6 +7,17 @@
     state: present
     update_cache: yes
 
+- name: Check if SSL files exist (when Keycloak enabled)
+  delegate_to: localhost
+  stat:
+    path: "{{ playbook_dir }}/files/{{ item }}"
+  loop:
+    - "{{ nifi_keystore_file }}"
+    - "{{ nifi_truststore_file }}"
+  register: ssl_files_check
+  when: nifi_use_keycloak
+  failed_when: nifi_use_keycloak and (ssl_files_check.results | selectattr('stat.exists', 'equalto', false) | list | length > 0)
+
 - name: Create nifi directories
   file:
     path: "{{ item }}"
@@ -118,3 +129,14 @@
     port: "{{ nifi_web_http_port }}"
     delay: 30
     timeout: 120
+
+- name: Install logrotate
+  apt:
+    name: logrotate
+    state: present
+
+- name: Configure logrotate for NiFi
+  template:
+    src: logrotate.j2
+    dest: /etc/logrotate.d/nifi
+    mode: '0644'

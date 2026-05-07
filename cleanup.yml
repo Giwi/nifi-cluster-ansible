@@ -1,0 +1,51 @@
+---
+- name: Cleanup ZooKeeper Cluster
+  hosts: zookeeper
+  become: yes
+  tasks:
+    - name: Stop and remove ZooKeeper container
+      command: "{{ item }}"
+      loop:
+        - podman stop zookeeper
+        - podman rm zookeeper
+      register: result
+      failed_when: result.rc != 0 and "no such container" not in result.stderr
+      changed_when: result.rc == 0
+
+    - name: Remove ZooKeeper network
+      command: podman network rm {{ zookeeper_docker_network }}
+      register: result
+      failed_when: result.rc != 0 and "not found" not in result.stderr
+      changed_when: result.rc == 0
+
+- name: Cleanup NiFi Cluster
+  hosts: nifi
+  become: yes
+  tasks:
+    - name: Stop and remove NiFi container
+      command: "{{ item }}"
+      loop:
+        - podman stop nifi
+        - podman rm nifi
+      register: result
+      failed_when: result.rc != 0 and "no such container" not in result.stderr
+      changed_when: result.rc == 0
+
+    - name: Remove NiFi network
+      command: podman network rm {{ nifi_docker_network }}
+      register: result
+      failed_when: result.rc != 0 and "not found" not in result.stderr
+      changed_when: result.rc == 0
+
+- name: Cleanup HAProxy
+  hosts: haproxy
+  become: yes
+  tasks:
+    - name: Stop and remove HAProxy container
+      command: "{{ item }}"
+      loop:
+        - podman stop haproxy
+        - podman rm haproxy
+      register: result
+      failed_when: result.rc != 0 and "no such container" not in result.stderr
+      changed_when: result.rc == 0

@@ -67,3 +67,14 @@
     port: "{{ haproxy_frontend_port }}"
     delay: 5
     timeout: 30
+
+- name: Install logrotate
+  apt:
+    name: logrotate
+    state: present
+
+- name: Configure logrotate for HAProxy
+  template:
+    src: logrotate.j2
+    dest: /etc/logrotate.d/haproxy
+    mode: '0644'

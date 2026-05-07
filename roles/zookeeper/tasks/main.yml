@@ -7,6 +7,17 @@
     state: present
     update_cache: yes
 
+- name: Check if SSL files exist (when SSL enabled)
+  delegate_to: localhost
+  stat:
+    path: "{{ playbook_dir }}/files/{{ item }}"
+  loop:
+    - "{{ zookeeper_keystore_file }}"
+    - "{{ zookeeper_truststore_file }}"
+  register: ssl_files_check
+  when: zookeeper_ssl_enabled
+  failed_when: zookeeper_ssl_enabled and (ssl_files_check.results | selectattr('stat.exists', 'equalto', false) | list | length > 0)
+
 - name: Create zookeeper user
   user:
     name: zookeeper
@@ -108,3 +119,14 @@
     port: "{{ zookeeper_client_port }}"
     delay: 10
     timeout: 60
+
+- name: Install logrotate
+  apt:
+    name: logrotate
+    state: present
+
+- name: Configure logrotate for ZooKeeper
+  template:
+    src: logrotate.j2
+    dest: /etc/logrotate.d/zookeeper
+    mode: '0644'

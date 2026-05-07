@@ -1,0 +1,23 @@
+/var/lib/containers/storage/overlay-containers/*/userdata/ctr.log {
+    daily
+    rotate 7
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0644 root root
+    sharedscripts
+    postrotate
+        podman restart zookeeper > /dev/null 2>&1 || true
+    endscript
+}
+
+/var/log/zookeeper/*.log {
+    daily
+    rotate 7
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0644 zookeeper zookeeper
+}

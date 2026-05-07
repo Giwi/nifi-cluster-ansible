@@ -22,3 +22,9 @@
     - group_vars/all/vault.yml
   roles:
     - haproxy
+
+- name: Configure Firewall Rules
+  hosts: all
+  become: yes
+  roles:
+    - common
