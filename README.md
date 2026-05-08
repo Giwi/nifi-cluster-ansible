@@ -107,7 +107,7 @@ Create the vault file with all required passwords:
 ansible-vault create group_vars/all/vault.yml
 ```
 
-Required vault variables (see `VAULT.md` for complete example):
+Required vault variables (see `docs/VAULT.md` for complete example):
 
 ```yaml
 ---
@@ -251,7 +251,7 @@ kubectl apply -f k8s/haproxy/
 - `k8s/*/configmap.yaml` - Configuration files
 - `k8s/network-policies.yaml` - Network policies
 
-See `k8s/README.md` for detailed K8s deployment instructions.
+See `docs/K8S.md` for detailed K8s deployment instructions.
 
 ## Backup and Restore
 
